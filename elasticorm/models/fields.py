@@ -36,3 +36,9 @@ class DateTimeField(BaseField):
     def __init__(self, *args, **kwargs):
         super(DateTimeField,self).__init__(*args, **kwargs)
         
+class ReferenceField(BaseField):
+
+    def __init__(self, *args, **kwargs):
+        super(ReferenceField,self).__init__(*args, **kwargs)
+        
+        

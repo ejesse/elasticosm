@@ -20,4 +20,3 @@ class TestModel(BaseElasticModel):
 
     date_time_field = DateTimeField()
     
-    type_name = 'test type name'

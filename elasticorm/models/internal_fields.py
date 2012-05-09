@@ -6,8 +6,15 @@ class BaseField(object):
         self.name = name
         self.verbose_name = verbose_name
         self.unique = unique
-        self.value = None
         self.required=required
+        self.default=default
+        
+
+    def get_value(self, obj):
+        return obj.__fields_values__[self.name]
+    
+    def set_value(self,obj,value):
+        obj.__fields_values__[self.name] = value
         
 class NumberField(BaseField):
     
