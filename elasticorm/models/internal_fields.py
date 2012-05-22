@@ -2,10 +2,9 @@
 
 class BaseField(object):
     
-    def __init__(self,name=None,verbose_name=None,unique=False,required=False,default=None):
+    def __init__(self,name=None,verbose_name=None,required=False,default=None):
         self.name = name
         self.verbose_name = verbose_name
-        self.unique = unique
         self.required=required
         self.default=default
         
