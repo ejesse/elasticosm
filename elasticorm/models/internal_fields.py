@@ -15,6 +15,9 @@ class BaseField(object):
     def set_value(self,obj,value):
         obj.__fields_values__[self.name] = value
         
+    def on_save(self,obj):
+        pass
+        
 class NumberField(BaseField):
     
     def __init__(self, *args, **kwargs):

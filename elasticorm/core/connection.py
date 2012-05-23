@@ -43,7 +43,10 @@ def get(type,query_args):
     for k,v in query_args.items():
         query = "%s%s:%s" % (query,k,v)
     
-    uri = "http://%s/%s/%s/_search?q=%s&default_operator=AND" % (servers[0],_database,type,query)
+    if type is not None:
+        uri = "http://%s/%s/%s/_search?q=%s&default_operator=AND" % (servers[0],_database,type,query)
+    else:
+        uri = "http://%s/%s/_search?q=%s&default_operator=AND" % (servers[0],_database,query)
     print uri
     r = requests.get(uri)
     
@@ -54,8 +57,13 @@ def get_by_id(type,id):
     global servers
     global _database
     
-    uri = "http://%s/%s/%s/%s" % (servers[0],_database,type,id)
-    print uri
-    r = requests.get(uri)
+    if type is not None:
+        uri = "http://%s/%s/%s/%s" % (servers[0],_database,type,id)
+        print uri
+        r = requests.get(uri)
+    else:
+        uri = "http://%s/%s/_search?q=id:%s" % (servers[0],_database,id)
+        print uri
+        r = requests.get(uri)
     
     return r

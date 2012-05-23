@@ -1,6 +1,7 @@
+from dateutil import parser
 from elasticorm.models.internal_fields import BaseField, NumberField
 import datetime
-
+import pytz
 
 class StringField(BaseField):
     
@@ -93,9 +94,34 @@ class DateTimeField(BaseField):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
-            if not isinstance(value,datetime.datetime):
+            if isinstance(value,str):
+                value = unicode(value)
+            if isinstance(value,unicode):
+                try:
+                    v = parser.parse(value)
+                    obj.__fields_values__[self.name] = v
+                except ValueError, e:
+                    raise TypeError('Unable to set DateTimeField to parsed value of %s due to %s' % (value, e))
+            elif not isinstance(value,datetime.datetime):
                 raise TypeError('Cant set DateTimeField to non-string (datetime.datetime) type')
-            obj.__fields_values__[self.name] = value
+            else:
+                obj.__fields_values__[self.name] = value
+                
+class AutoDateTimeField(DateTimeField):
+    
+    def on_save(self,obj):
+        d = datetime.datetime.utcnow()
+        d = d.replace(tzinfo=pytz.utc)
+        self.set_value(obj, d)
+        
+class CreationDateTimeField(DateTimeField):
+        
+    def on_save(self,obj):
+        if obj.id is None:
+            d = datetime.datetime.utcnow()
+            d = d.replace(tzinfo=pytz.utc)
+            self.set_value(obj, d)
+        
         
 class ReferenceField(BaseField):
 

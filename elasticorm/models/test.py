@@ -1,10 +1,7 @@
-from elasticorm.models.base import BaseElasticModel
-from elasticorm.models.fields import StringField, TextField, IntField, LongField, \
-    FloatField, BooleanField, DateTimeField
+from elasticorm.models import *
 
 
-
-class TestModel(BaseElasticModel):
+class TestModel(ElasticModel):
     
     string_field = StringField()
     
