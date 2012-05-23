@@ -1,4 +1,4 @@
-from elasticorm.core.connection import save, get, get_by_id
+from elasticorm.core.connection import save, get, get_by_id, delete as connection_delete
 from elasticorm.core.exceptions import MultipleObjectsReturned
 from elasticorm.models.internal_fields import BaseField
 from importlib import import_module
@@ -52,11 +52,6 @@ class BaseElasticModel(object):
                 if isinstance(attribute_value,BaseField):
                     self.__add_elastic_field_to_class__(attr_name,attribute_value)
 
-        print '----'
-        print self.__fields_values__
-        print '----'
-        print self.__fields__
-                    
         type_name = self.__class__.__dict__.get('type_name',None)
         
         if type_name is None:
@@ -201,5 +196,7 @@ class BaseElasticModel(object):
                 instance.__setattr__(k,v)
             items.append(instance)
         return items
-        
+    
+    def delete(self):
+        return connection_delete(self)
     

@@ -1,5 +1,7 @@
 from elasticorm.core.exceptions import ElasticORMException
-import pyes, requests
+import pyes
+import requests
+import simplejson
 
 
 servers = ["localhost:9200"]
@@ -34,7 +36,7 @@ def save(obj):
     response = _conn.index(obj.__to_elastic_json__(), _database, obj.type_name, obj.id)
     return response
     
-def get(type,query_args):
+def get(type_name,query_args):
     
     global servers
     global _database
@@ -43,22 +45,50 @@ def get(type,query_args):
     for k,v in query_args.items():
         query = "%s%s:%s" % (query,k,v)
     
-    if type is not None:
-        uri = "http://%s/%s/%s/_search?q=%s&default_operator=AND" % (servers[0],_database,type,query)
-    else:
-        uri = "http://%s/%s/_search?q=%s&default_operator=AND" % (servers[0],_database,query)
+    type_string=''
+    
+    if type_name is not None:
+        type_string = "/%s" % (type_name)
+    
+    query_string = ''
+        
+    if query != '':
+        query_string = "q=%s&" % (query)
+    
+    
+    uri = "http://%s/%s%s/_search?%sdefault_operator=AND&sort=created_date:desc" % (servers[0],_database,type_string,query_string)
     print uri
     r = requests.get(uri)
     
     return r
+
+def delete(obj):
+
+    global servers
+    global _database
+
+    if obj.id is None:
+        return False
+    if obj.type_name is None:
+        return False
     
-def get_by_id(type,id):
+    uri = "http://%s/%s/%s/%s" % (servers[0],_database,obj.type_name,obj.id)
+    
+    r = requests.delete(uri).text
+    d = simplejson.loads(r)
+    if d.has_key('found'):
+        if d['found']:
+            if d.has_key('ok'):
+                return d['ok']
+    return False 
+    
+def get_by_id(type_name,id):
     
     global servers
     global _database
     
-    if type is not None:
-        uri = "http://%s/%s/%s/%s" % (servers[0],_database,type,id)
+    if type_name is not None:
+        uri = "http://%s/%s/%s/%s" % (servers[0],_database,type_name,id)
         print uri
         r = requests.get(uri)
     else:
