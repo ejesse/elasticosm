@@ -38,6 +38,10 @@ class BaseElasticModel(object):
     
     def __init__(self, *args, **kwargs):
         
+        self.__fields__ = {}
+        self.__fields_values__ = {}
+        self.id = None
+        
         # get and set parent class stuff
         for base in self.__class__.__bases__:
             for attr_name,attribute_value in base.__dict__.items():
