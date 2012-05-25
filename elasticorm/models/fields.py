@@ -140,7 +140,7 @@ class ReferenceField(BaseField):
                 obj.__fields_values__[self.name] = value.id
                 obj.__reference_cache__[value.id] = value
         else:
-            obj.__fields_values__[self.name] = value.id
+            obj.__fields_values__[self.name] = value
 
     def get_value(self, obj):
         value_id = obj.__fields_values__[self.name]
@@ -161,6 +161,7 @@ class ReferenceField(BaseField):
                 # remove the entry with the temp id
                 obj.__reference_cache__.pop(temp_id)
             except ValueError:
+                ## no extra work needed, either it's empty or it's an object that's already saved
                 pass 
         
         
