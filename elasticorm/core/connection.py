@@ -82,7 +82,7 @@ def delete(obj):
                 return d['ok']
     return False 
     
-def get_by_id(type_name,id):
+def get_by_id(id,type_name=None):
     
     global servers
     global _database

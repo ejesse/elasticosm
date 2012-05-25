@@ -5,7 +5,7 @@ class TestModel(ElasticModel):
     
     string_field = StringField()
     
-    text_field = TextField()
+    search_field = SearchField()
 
     int_field = IntField()
     
@@ -17,3 +17,8 @@ class TestModel(ElasticModel):
 
     date_time_field = DateTimeField()
     
+class TestModelToo(ElasticModel):
+
+    name = StringField()
+    
+    ref = ReferenceField()

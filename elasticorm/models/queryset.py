@@ -18,7 +18,7 @@ class QuerySet(object):
         next_cursor = self.cursor + 1
         if next_cursor > self.count:
             raise StopIteration
-        if next_cursor > len(self.items):
+        if next_cursor >= len(self.items):
             if self.calling_object is None:
                 raise ElasticORMException('No reference object to go get further objects. How on earth did this happen?!?!??')
             parsed_uri = requests.utils.urlparse(self.query_uri)
@@ -29,8 +29,13 @@ class QuerySet(object):
                 parameters[k] = v[0]
             parameters['from'] = next_cursor
             new_uri = "%s%s%s?%s" % (parsed_uri.scheme,parsed_uri.netloc,parsed_uri.path,urllib.urlencode(parameters))
+        self.cursor = next_cursor
+        return self.items[self.cursor]
                 
             
     def count(self):
         return self.count
+    
+    def __repr__(self):
+        return self.items.__repr__()
     

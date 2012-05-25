@@ -24,6 +24,7 @@ class ModelBase(type):
         model_fields = {}
         model_fields['__fields__'] = {}
         model_fields["__fields_values__"] = {}
+        model_fields["__reference_cache__"] = {}
         model_fields['type_name'] = attrs.get('type_name',None)
         model_fields["id"] = None
         
@@ -40,6 +41,7 @@ class BaseElasticModel(object):
         
         self.__fields__ = {}
         self.__fields_values__ = {}
+        self.__reference_cache__ = {}
         self.id = None
         
         # get and set parent class stuff

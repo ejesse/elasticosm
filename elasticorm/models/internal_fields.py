@@ -16,7 +16,8 @@ class BaseField(object):
         obj.__fields_values__[self.name] = value
         
     def on_save(self,obj):
-        pass
+        if obj.__fields_values__[self.name] is None:
+            obj.__fields_values__[self.name] = self.default
         
 class NumberField(BaseField):
     

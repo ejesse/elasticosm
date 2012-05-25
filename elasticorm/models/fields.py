@@ -1,5 +1,6 @@
 from dateutil import parser
 from elasticorm.models.internal_fields import BaseField, NumberField
+from elasticorm.models.base import BaseElasticModel
 import datetime
 import pytz
 
@@ -18,10 +19,10 @@ class StringField(BaseField):
                 raise TypeError('Cant set StringField to non-string (str) type')
             obj.__fields_values__[self.name] = value
         
-class TextField(StringField):
+class SearchField(StringField):
 
     def __init__(self, *args, **kwargs):
-        super(TextField,self).__init__(*args, **kwargs)
+        super(SearchField,self).__init__(*args, **kwargs)
         
     def set_value(self,obj,value):
         if value is None:
@@ -127,5 +128,40 @@ class ReferenceField(BaseField):
 
     def __init__(self, *args, **kwargs):
         super(ReferenceField,self).__init__(*args, **kwargs)
+        
+    def set_value(self,obj,value):
+        if isinstance(value,BaseElasticModel):
+            if value.id is None:
+                next_int = len(obj.__reference_cache__.keys()) + 1
+                temp_id = 'TEMP_ID_%s' % (next_int)
+                obj.__reference_cache__[temp_id] = value 
+                obj.__fields_values__[self.name] = temp_id
+            else:
+                obj.__fields_values__[self.name] = value.id
+                obj.__reference_cache__[value.id] = value
+        else:
+            obj.__fields_values__[self.name] = value.id
+
+    def get_value(self, obj):
+        value_id = obj.__fields_values__[self.name]
+        if not obj.__reference_cache__.has_key(value_id):
+            referenced_object = BaseElasticModel.get(id=value_id)
+            obj.__reference_cache__[value_id] = referenced_object
+        return obj.__reference_cache__[value_id]
+    
+    def on_save(self,obj):
+        if obj.__fields_values__[self.name] is not None:
+            try:
+                temp_id = obj.__fields_values__[self.name]
+                temp_id.index("TEMP_ID")
+                referenced_object = obj.__reference_cache__[temp_id]
+                referenced_object.save()
+                obj.__fields_values__[self.name]=referenced_object.id
+                obj.__reference_cache__[referenced_object.id] = referenced_object
+                # remove the entry with the temp id
+                obj.__reference_cache__.pop(temp_id)
+            except ValueError:
+                pass 
+        
         
         
