@@ -1,4 +1,5 @@
 from elasticorm.core.connection import save, get, get_by_id, delete as connection_delete
+from elasticorm.models.registry import model_registry as __type_names_to_classes__, register_model
 from elasticorm.core.exceptions import MultipleObjectsReturned
 from elasticorm.models.internal_fields import BaseField
 from importlib import import_module
@@ -7,7 +8,7 @@ import re
 import simplejson
 import uuid
 import pytz
-__type_names_to_classes__ = {}
+
 
 class ModelBase(type):
     """
@@ -61,12 +62,11 @@ class BaseElasticModel(object):
         type_name = self.__class__.__dict__.get('type_name',None)
         
         if type_name is None:
-            type_name = self.__class__.__name__
+            type_name = "%s.%s" % (self.__class__.__module__,self.__class__.__name__)
         
         self.type_name = self.__clean_type_name__(type_name)
         
-        global __type_names_to_classes__
-        __type_names_to_classes__[self.type_name] = self.__class__
+#        register_model(self)
         
         self.id = None
         
