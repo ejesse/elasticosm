@@ -6,10 +6,10 @@ __string_field_mapping__ = {"analyzer": "keyword", "type": "string"}
 
 def register_model(model_instance):
     
-    global __model_registry__
+    global model_registry
     
-    if not __model_registry__.has_key(model_instance.type_name):
-        __model_registry__[model_instance.type_name] = model_instance.__class__
+    if not model_registry.has_key(model_instance.type_name):
+        model_registry[model_instance.type_name] = model_instance.__class__
         properties = {}
         for field_name, field_instance in model_instance.__fields__.items():
             from elasticorm.models.fields import StringField

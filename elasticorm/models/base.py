@@ -63,8 +63,10 @@ class BaseElasticModel(object):
         
         if type_name is None:
             type_name = "%s.%s" % (self.__class__.__module__,self.__class__.__name__)
+        else:
+            type_name = self.__clean_type_name__(type_name)
         
-        self.type_name = self.__clean_type_name__(type_name)
+        self.type_name = type_name
         
 #        register_model(self)
         
