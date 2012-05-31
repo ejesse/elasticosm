@@ -40,37 +40,39 @@ class BaseElasticModel(object):
     
     def __init__(self, *args, **kwargs):
         
-        self.__fields__ = {}
-        self.__fields_values__ = {}
-        self.__reference_cache__ = {}
-        self.id = None
+        if self.__class__ != BaseElasticModel:
         
-        # get and set parent class stuff
-        for base in self.__class__.__bases__:
-            for attr_name,attribute_value in base.__dict__.items():
+            self.__fields__ = {}
+            self.__fields_values__ = {}
+            self.__reference_cache__ = {}
+            self.id = None
+            
+            # get and set parent class stuff
+            for base in self.__class__.__bases__:
+                for attr_name,attribute_value in base.__dict__.items():
+                    if not attr_name.startswith('_'):
+                        if isinstance(attribute_value,BaseField):
+                            self.__add_elastic_field_to_class__(attr_name,attribute_value)
+            for attr_name,attribute_value in self.__class__.__dict__.items():
+                # skip the built-in stuff, db/elastic fields should never be called __something or _something
                 if not attr_name.startswith('_'):
+                    #print "%s: %s" % (attr_name, attribute_value)
+                    # is it an elasticorm field?
                     if isinstance(attribute_value,BaseField):
                         self.__add_elastic_field_to_class__(attr_name,attribute_value)
-        for attr_name,attribute_value in self.__class__.__dict__.items():
-            # skip the built-in stuff, db/elastic fields should never be called __something or _something
-            if not attr_name.startswith('_'):
-                #print "%s: %s" % (attr_name, attribute_value)
-                # is it an elasticorm field?
-                if isinstance(attribute_value,BaseField):
-                    self.__add_elastic_field_to_class__(attr_name,attribute_value)
-
-        type_name = self.__class__.__dict__.get('type_name',None)
-        
-        if type_name is None:
-            type_name = "%s.%s" % (self.__class__.__module__,self.__class__.__name__)
-        else:
-            type_name = self.__clean_type_name__(type_name)
-        
-        self.type_name = type_name
-        
-#        register_model(self)
-        
-        self.id = None
+    
+            type_name = self.__class__.__dict__.get('type_name',None)
+            
+            if type_name is None:
+                type_name = "%s.%s" % (self.__class__.__module__,self.__class__.__name__)
+            else:
+                type_name = self.__clean_type_name__(type_name)
+            
+            self.type_name = type_name
+            
+    #        register_model(self)
+            
+            self.id = None
         
     def __add_elastic_field_to_class__(self,field_name,field_value):
         field_value.name = field_name
@@ -146,15 +148,7 @@ class BaseElasticModel(object):
 
     @classmethod
     def get_type_name(cls):
-        try:
-            base_type_name = cls.type_name
-            if base_type_name is None:
-                base_type_name = BaseElasticModel.get_clean_type_name(cls.__name__)
-        except AttributeError:
-            base_type_name = BaseElasticModel.get_clean_type_name(cls.__name__)
-            
-        type_name = BaseElasticModel.get_clean_type_name(base_type_name)
-        return type_name
+        return "%s.%s" % (cls.__module__,cls.__name__)
 
     @classmethod
     def get(cls,*args,**kwargs):

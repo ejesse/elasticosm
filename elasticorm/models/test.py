@@ -3,6 +3,8 @@ from elasticorm.models import *
 
 class TestModel(ElasticModel):
     
+    name = StringField()
+    
     string_field = StringField()
     
     search_field = SearchField()

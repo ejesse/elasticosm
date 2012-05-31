@@ -1,4 +1,5 @@
 from elasticorm.core.exceptions import ElasticORMException
+from importlib import import_module
 import pyes
 import requests
 import simplejson
@@ -21,6 +22,9 @@ def get_db():
     global _database
     return _database
 
+def get_connection():
+    return _conn
+
 class ElasticORMConnection(object):
     
     def __init__(self,database):
@@ -41,24 +45,26 @@ def get(type_name,query_args):
     global servers
     global _database
     
-    query = ''
+    terms = []
     for k,v in query_args.items():
-        query = "%s%s:%s" % (query,k,v)
+        value = v
+        from elasticorm.models import ElasticModel
+        if isinstance(v,ElasticModel):
+            value = v.id
+        term = {"term" : {k : value}}
+        terms.append(term)
+        
+    query = {"query" : {"constant_score" : {"filter" : {"and" : terms}}}}
+    query_json = simplejson.dumps(query)
     
     type_string=''
     
     if type_name is not None:
         type_string = "/%s" % (type_name)
     
-    query_string = ''
-        
-    if query != '':
-        query_string = "q=%s&" % (query)
     
-    
-    uri = "http://%s/%s%s/_search?%sdefault_operator=AND&sort=created_date:desc" % (servers[0],_database,type_string,query_string)
-    print uri
-    r = requests.get(uri)
+    uri = "http://%s/%s%s/_search" % (servers[0],_database,type_string)
+    r = requests.get(uri,data=query_json)
     
     return r
 
@@ -95,5 +101,16 @@ def get_by_id(id,type_name=None):
         uri = "http://%s/%s/_search?q=id:%s" % (servers[0],_database,id)
         print uri
         r = requests.get(uri)
-    
-    return r
+    d = simplejson.loads(r.text)
+    num_hits = d['hits']['total']
+    if num_hits < 1:
+        return None
+    from elasticorm.models.registry import model_registry
+    class_type = model_registry[d['hits']['hits'][0]['_type']]
+    module = import_module(class_type.__module__)
+    _class = getattr(module,class_type.__name__)
+    instance = _class()
+    obj_dict = d['hits']['hits'][0]['_source']
+    for k,v in obj_dict.items():
+        instance.__setattr__(k,v)
+    return instance

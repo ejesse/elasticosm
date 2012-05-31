@@ -145,7 +145,8 @@ class ReferenceField(BaseField):
     def get_value(self, obj):
         value_id = obj.__fields_values__[self.name]
         if not obj.__reference_cache__.has_key(value_id):
-            referenced_object = BaseElasticModel.get(id=value_id)
+            from elasticorm.core.connection import get_by_id
+            referenced_object = get_by_id(value_id)
             obj.__reference_cache__[value_id] = referenced_object
         return obj.__reference_cache__[value_id]
     
