@@ -33,11 +33,11 @@ class ElasticORMConnection(object):
     
     def save(self,obj):
         
-        self.es_conn.index(obj.__to_elastic_json__(), self.database, obj.type_name, obj.id)
+        self.es_conn.index(obj.__to_elastic_json__(), self.database, obj.__get_elastic_type_name__(), obj.id)
         
 def save(obj):
     
-    response = _conn.index(obj.__to_elastic_json__(), _database, obj.type_name, obj.id)
+    response = _conn.index(obj.__to_elastic_json__(), _database, obj.__get_elastic_type_name__(), obj.id)
     return response
     
 def get(type_name,query_args):
@@ -75,10 +75,10 @@ def delete(obj):
 
     if obj.id is None:
         return False
-    if obj.type_name is None:
+    if obj.__get_elastic_type_name__() is None:
         return False
     
-    uri = "http://%s/%s/%s/%s" % (servers[0],_database,obj.type_name,obj.id)
+    uri = "http://%s/%s/%s/%s" % (servers[0],_database,obj.__get_elastic_type_name__(),obj.id)
     
     r = requests.delete(uri).text
     d = simplejson.loads(r)

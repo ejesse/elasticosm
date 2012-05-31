@@ -1,5 +1,5 @@
 from elasticorm.core.connection import save, get, get_by_id, delete as connection_delete
-from elasticorm.models.registry import model_registry as __type_names_to_classes__, register_model
+from elasticorm.models.registry import model_registry, register_model
 from elasticorm.core.exceptions import MultipleObjectsReturned
 from elasticorm.models.internal_fields import BaseField
 from importlib import import_module
@@ -9,6 +9,12 @@ import simplejson
 import uuid
 import pytz
 
+
+def check_registry(cls):
+    global model_registry
+    full_name = "%s.%s" % (cls.__name__,cls.__module__)
+    if not model_registry.has_key(full_name):
+        register_model(cls())
 
 class ModelBase(type):
     """
@@ -61,17 +67,6 @@ class BaseElasticModel(object):
                     if isinstance(attribute_value,BaseField):
                         self.__add_elastic_field_to_class__(attr_name,attribute_value)
     
-            type_name = self.__class__.__dict__.get('type_name',None)
-            
-            if type_name is None:
-                type_name = "%s.%s" % (self.__class__.__module__,self.__class__.__name__)
-            else:
-                type_name = self.__clean_type_name__(type_name)
-            
-            self.type_name = type_name
-            
-    #        register_model(self)
-            
             self.id = None
         
     def __add_elastic_field_to_class__(self,field_name,field_value):
@@ -107,17 +102,11 @@ class BaseElasticModel(object):
                 return None
         else:
             return ret_val
+
+    @classmethod            
+    def __get_elastic_type_name__(cls):
+        return "%s.%s" % (cls.__name__,cls.__module__)
             
-    def __clean_type_name__(self, type_name):
-        return BaseElasticModel.get_clean_type_name(type_name)
-    
-    @staticmethod
-    def get_clean_type_name(type_name):
-        s1 = re.sub('(.)([A-Z][a-z]+)', r'\1_\2', type_name)
-        clean_name = re.sub('([a-z0-9])([A-Z])', r'\1_\2', s1).lower()
-        clean_name = clean_name.replace(' ','_')
-        return clean_name
-    
     def __to_elastic_json__(self):
         d = {}
         for k,v in self.__fields_values__.items():
@@ -130,6 +119,7 @@ class BaseElasticModel(object):
         return simplejson.dumps(d)
     
     def save(self):
+        check_registry(self.__class__)
         for v in self.__fields__.values():
             v.on_save(self)
         if self.id is None:
@@ -145,18 +135,14 @@ class BaseElasticModel(object):
         version = d['_version']
         return version
 
-
-    @classmethod
-    def get_type_name(cls):
-        return "%s.%s" % (cls.__module__,cls.__name__)
-
     @classmethod
     def get(cls,*args,**kwargs):
-        global __type_names_to_classes__
-
-        type_name = cls.get_type_name()
-            
-        if type_name == 'base_elastic_model':
+        global model_registry
+        type_name = cls.__get_elastic_type_name__()
+        check_registry(cls)
+        from elasticorm.models import ElasticModel
+        base_model_type = ElasticModel.__get_elastic_type_name__()
+        if type_name == base_model_type:
             type_name = None
         r = get(type_name,kwargs)
         d = simplejson.loads(r.text)
@@ -166,7 +152,7 @@ class BaseElasticModel(object):
         if num_hits > 1:
             raise MultipleObjectsReturned('Multiple objects returned for query %s' % kwargs)
         obj_dict = d['hits']['hits'][0]['_source']
-        class_type = __type_names_to_classes__[d['hits']['hits'][0]['_type']]
+        class_type = model_registry[d['hits']['hits'][0]['_type']]
         module = import_module(class_type.__module__)
         _class = getattr(module,class_type.__name__)
         instance = _class()
@@ -177,9 +163,9 @@ class BaseElasticModel(object):
     
     @classmethod
     def filter(cls,*args,**kwargs):
-        global __type_names_to_classes__
-
-        type_name = cls.get_type_name()
+        global model_registry
+        check_registry(cls)
+        type_name = cls.__get_elastic_type_name__()
         r = get(type_name,kwargs)
         d = simplejson.loads(r.text)
         print d
@@ -190,7 +176,7 @@ class BaseElasticModel(object):
         
         for hit in d['hits']['hits']:
             obj_dict = hit['_source']
-            class_type = __type_names_to_classes__[hit['_type']]
+            class_type = model_registry[hit['_type']]
             module = import_module(class_type.__module__)
             _class = getattr(module,class_type.__name__)
             instance = _class()
