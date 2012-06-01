@@ -1,4 +1,4 @@
-from elasticorm.core.connection import save, get, get_by_id, delete as connection_delete
+from elasticorm.core.connection import save, get, get_by_id, get_count, delete as connection_delete
 from elasticorm.models.registry import model_registry, register_model
 from elasticorm.core.exceptions import MultipleObjectsReturned
 from elasticorm.models.internal_fields import BaseField
@@ -12,7 +12,7 @@ import pytz
 
 def check_registry(cls):
     global model_registry
-    full_name = "%s.%s" % (cls.__name__,cls.__module__)
+    full_name = "%s.%s" % (cls.__module__,cls.__name__)
     if not model_registry.has_key(full_name):
         register_model(cls())
 
@@ -32,7 +32,6 @@ class ModelBase(type):
         model_fields['__fields__'] = {}
         model_fields["__fields_values__"] = {}
         model_fields["__reference_cache__"] = {}
-        model_fields['type_name'] = attrs.get('type_name',None)
         model_fields["id"] = None
         
         attrs.update(model_fields)
@@ -105,7 +104,7 @@ class BaseElasticModel(object):
 
     @classmethod            
     def __get_elastic_type_name__(cls):
-        return "%s.%s" % (cls.__name__,cls.__module__)
+        return "%s.%s" % (cls.__module__,cls.__name__)
             
     def __to_elastic_json__(self):
         d = {}
@@ -136,6 +135,22 @@ class BaseElasticModel(object):
         return version
 
     @classmethod
+    def count(cls):
+        return get_count(cls.__get_elastic_type_name__())
+
+    @classmethod
+    def from_elastic_dict(cls,dict):
+        global model_registry
+        obj_dict = dict['_source']
+        class_type = model_registry[dict['_type']]
+        module = import_module(class_type.__module__)
+        _class = getattr(module,class_type.__name__)
+        instance = _class()
+        for k,v in obj_dict.items():
+            instance.__setattr__(k,v)
+        return instance
+
+    @classmethod
     def get(cls,*args,**kwargs):
         global model_registry
         type_name = cls.__get_elastic_type_name__()
@@ -151,39 +166,23 @@ class BaseElasticModel(object):
             return None
         if num_hits > 1:
             raise MultipleObjectsReturned('Multiple objects returned for query %s' % kwargs)
-        obj_dict = d['hits']['hits'][0]['_source']
-        class_type = model_registry[d['hits']['hits'][0]['_type']]
-        module = import_module(class_type.__module__)
-        _class = getattr(module,class_type.__name__)
-        instance = _class()
-        print obj_dict.items()
-        for k,v in obj_dict.items():
-            instance.__setattr__(k,v)
-        return instance
+        obj_dict = d['hits']['hits'][0]
+        return cls.from_elastic_dict(obj_dict)
     
     @classmethod
     def filter(cls,*args,**kwargs):
         global model_registry
         check_registry(cls)
         type_name = cls.__get_elastic_type_name__()
-        r = get(type_name,kwargs)
-        d = simplejson.loads(r.text)
-        print d
-        num_hits = d['hits']['total']
-        items = []
-        if num_hits < 1:
-            return items
-        
-        for hit in d['hits']['hits']:
-            obj_dict = hit['_source']
-            class_type = model_registry[hit['_type']]
-            module = import_module(class_type.__module__)
-            _class = getattr(module,class_type.__name__)
-            instance = _class()
-            for k,v in obj_dict.items():
-                instance.__setattr__(k,v)
-            items.append(instance)
-        return items
+        from elasticorm.models.queryset import Query, QuerySet
+        query = Query.from_query_args(kwargs)
+        query.elastic_type = type_name
+        qs = QuerySet(query=query)
+        return qs
+    
+    @classmethod
+    def all(cls):
+        return cls.filter({})
     
     def delete(self):
         return connection_delete(self)

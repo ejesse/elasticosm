@@ -39,34 +39,51 @@ def save(obj):
     
     response = _conn.index(obj.__to_elastic_json__(), _database, obj.__get_elastic_type_name__(), obj.id)
     return response
+
+def fetch(query):
+    global servers
+    global _database
+    
+    request_json = query.to_json()
+    
+    type_string=''
+    
+    if query.elastic_type is not None:
+        from elasticorm.models import ElasticModel
+        if query.elastic_type != ElasticModel.__get_elastic_type_name__():
+            type_string = "/%s" % (query.elastic_type)
+    
+    
+    uri = "http://%s/%s%s/_search" % (servers[0],_database,type_string)
+    print uri
+    print request_json
+    r = requests.get(uri,data=request_json)
+    
+    return r
+
     
 def get(type_name,query_args):
     
     global servers
     global _database
     
-    terms = []
-    for k,v in query_args.items():
-        value = v
-        from elasticorm.models import ElasticModel
-        if isinstance(v,ElasticModel):
-            value = v.id
-        term = {"term" : {k : value}}
-        terms.append(term)
-        
-    query = {"query" : {"constant_score" : {"filter" : {"and" : terms}}}}
-    query_json = simplejson.dumps(query)
+    from elasticorm.models.queryset import Query
+    query = Query.from_query_args(query_args)
+    if type_name is not None:
+        query.elastic_type = type_name
     
-    type_string=''
-    
+    return fetch(query)
+
+def get_count(type_name=None):
+    global _database
     if type_name is not None:
         type_string = "/%s" % (type_name)
     
-    
-    uri = "http://%s/%s%s/_search" % (servers[0],_database,type_string)
-    r = requests.get(uri,data=query_json)
-    
-    return r
+    uri = "http://%s/%s%s/_count" % (servers[0],_database,type_string)
+    r = requests.get(uri)
+    json = r.text
+    d = simplejson.loads(json)
+    return d['count']
 
 def delete(obj):
 
