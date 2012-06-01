@@ -1,4 +1,4 @@
-from elasticosm.core.exceptions import ElasticORMException
+from elasticosm.core.exceptions import ElasticOSMException
 from urlparse import parse_qs
 import requests
 import urllib

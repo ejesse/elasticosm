@@ -1,4 +1,4 @@
-from elasticosm.core.exceptions import ElasticORMException
+from elasticosm.core.exceptions import ElasticOSMException
 from importlib import import_module
 import pyes
 import requests
@@ -12,7 +12,7 @@ _database = 'test_elasticosm'
 
 def __get_es_connection(database):
     if database is None:
-        ElasticORMException("Cannot connect to database 'None'")
+        ElasticOSMException("Cannot connect to database 'None'")
     global _database
     _database = database
     global _conn
@@ -25,7 +25,7 @@ def get_db():
 def get_connection():
     return _conn
 
-class ElasticORMConnection(object):
+class ElasticOSMConnection(object):
     
     def __init__(self,database):
         self.es_conn = __get_es_connection(database)
