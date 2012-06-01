@@ -1,4 +1,4 @@
-elasticorm
+elasticosm
 ==========
 
-Python ORM for Elastic Search
+Python "OSM" (Object-Search Mapper) for Elastic Search
