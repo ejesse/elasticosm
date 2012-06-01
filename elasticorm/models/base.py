@@ -53,11 +53,7 @@ class BaseElasticModel(object):
             self.id = None
             
             # get and set parent class stuff
-            for base in self.__class__.__bases__:
-                for attr_name,attribute_value in base.__dict__.items():
-                    if not attr_name.startswith('_'):
-                        if isinstance(attribute_value,BaseField):
-                            self.__add_elastic_field_to_class__(attr_name,attribute_value)
+            self.__add_fields_from_class_hierarchy__(self.__class__)
             for attr_name,attribute_value in self.__class__.__dict__.items():
                 # skip the built-in stuff, db/elastic fields should never be called __something or _something
                 if not attr_name.startswith('_'):
@@ -67,6 +63,14 @@ class BaseElasticModel(object):
                         self.__add_elastic_field_to_class__(attr_name,attribute_value)
     
             self.id = None
+
+    def __add_fields_from_class_hierarchy__(self,cls):
+        for base in cls.__bases__:
+            for attr_name,attribute_value in base.__dict__.items():
+                if not attr_name.startswith('_'):
+                    if isinstance(attribute_value,BaseField):
+                        self.__add_elastic_field_to_class__(attr_name,attribute_value)
+            self.__add_fields_from_class_hierarchy__(base)
         
     def __add_elastic_field_to_class__(self,field_name,field_value):
         field_value.name = field_name

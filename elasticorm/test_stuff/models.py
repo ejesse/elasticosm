@@ -24,3 +24,7 @@ class TestModelToo(ElasticModel):
     name = StringField()
     
     ref = ReferenceField()
+    
+class ExtendedField(TestModelToo):
+    
+    another_field = StringField()

@@ -17,6 +17,7 @@ class Query(object):
         self.terms = []
         self.elastic_type = None
         self.start_at = None
+        self.types = []
 
     def add_term(self,k,v):
         
@@ -50,8 +51,33 @@ class Query(object):
         query_dict['sort'] = self.sort
         
         if len(self.terms) > 0:
-            term_query = {"constant_score" : {"filter" : {self.term_operand : self.terms}}}
-            query_dict['query'] = term_query
+            term_query = {self.term_operand : self.terms}
+        else:
+            term_query = None
+
+        filters = []
+        
+        if term_query is not None:
+            filters.append(term_query)
+            
+        if len(self.types) > 0:
+            types = []
+            for type_string in self.types:
+                type_term = {"term" : {"_type":type_string}}
+                types.append(type_term)
+            type_filter = {"or":types}
+            filters.append(type_filter)
+            
+        if len(filters) == 0:
+            filter = None
+        elif len(filters) == 1:
+            filter = {"filter" : filters[0]}
+        else:
+            filter = {"filter" : {"and":filters}}
+                
+        if filter is not None:
+            query_dict['query'] = {"constant_score" : filter}
+            
         if self.start_at is not None:
             query_dict['from'] = self.start_at
         
@@ -92,10 +118,10 @@ class Query(object):
 
 class QuerySet(object):
     
-    def __init__(self,items=[],count=0,cursor=0,query=None):
-        self.items = items
-        self.num_items = count
-        self.cursor=cursor
+    def __init__(self,query=None):
+        self.items = []
+        self.num_items = 0
+        self.cursor=0
         self.query=query
         self.__initial_fetch__ = False
         
@@ -129,7 +155,8 @@ class QuerySet(object):
         return self
         
     def __fetch_items__(self):
-        print 'called fetch'
+        print 'calling fetch'
+        print self.query.to_json()
         from elasticorm.core.connection import fetch
         from elasticorm.models import ElasticModel
         json = fetch(self.query)
