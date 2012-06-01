@@ -64,9 +64,10 @@ class Query(object):
 
         if self.elastic_type is not None:
             if self.elastic_type is not ElasticModel.__get_elastic_type_name__():
-                sub_types = inheritance_registry[self.elastic_type]
-                self.types.extend(sub_types)
-                self.types.append(self.elastic_type)
+                if inheritance_registry.has_key(self.elastic_type):
+                    sub_types = inheritance_registry[self.elastic_type]
+                    self.types.extend(sub_types)
+                    self.types.append(self.elastic_type)
             
         if len(self.types) > 0:
             types = []

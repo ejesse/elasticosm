@@ -122,7 +122,6 @@ class BaseElasticModel(object):
         return simplejson.dumps(d)
     
     def save(self):
-        check_registry(self.__class__)
         for v in self.__fields__.values():
             v.on_save(self)
         if self.id is None:
@@ -144,7 +143,6 @@ class BaseElasticModel(object):
 
     @classmethod
     def from_elastic_dict(cls,dict):
-        global model_registry
         obj_dict = dict['_source']
         class_type = model_registry[dict['_type']]
         module = import_module(class_type.__module__)
@@ -156,9 +154,7 @@ class BaseElasticModel(object):
 
     @classmethod
     def get(cls,*args,**kwargs):
-        global model_registry
         type_name = cls.__get_elastic_type_name__()
-        check_registry(cls)
         from elasticosm.models import ElasticModel
         base_model_type = ElasticModel.__get_elastic_type_name__()
         if type_name == base_model_type:
@@ -175,8 +171,6 @@ class BaseElasticModel(object):
     
     @classmethod
     def filter(cls,*args,**kwargs):
-        global model_registry
-        check_registry(cls)
         type_name = cls.__get_elastic_type_name__()
         from elasticosm.models.queryset import Query, QuerySet
         query = Query.from_query_args(kwargs)
