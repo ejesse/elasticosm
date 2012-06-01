@@ -28,7 +28,7 @@ class Query(object):
             k = '_id'
         if isinstance(v,ElasticModel):
             value = v.id
-        term = {"term" : {k : v}}
+        term = {"term" : {k : value}}
         self.terms.append(term)
         
     def add_sort(self,sort_arg):
