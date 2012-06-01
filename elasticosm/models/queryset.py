@@ -1,8 +1,10 @@
 from elasticosm.core.exceptions import ElasticOSMException
+from elasticosm.models import ElasticModel
+from elasticosm.models.registry import inheritance_registry
 from urlparse import parse_qs
 import requests
-import urllib
 import simplejson
+import urllib
 
 """
 Super naive basic query object
@@ -59,6 +61,12 @@ class Query(object):
         
         if term_query is not None:
             filters.append(term_query)
+
+        if self.elastic_type is not None:
+            if self.elastic_type is not ElasticModel.__get_elastic_type_name__():
+                sub_types = inheritance_registry[self.elastic_type]
+                self.types.extend(sub_types)
+                self.types.append(self.elastic_type)
             
         if len(self.types) > 0:
             types = []
@@ -67,6 +75,7 @@ class Query(object):
                 types.append(type_term)
             type_filter = {"or":types}
             filters.append(type_filter)
+            self.elastic_type = None
             
         if len(filters) == 0:
             filter = None

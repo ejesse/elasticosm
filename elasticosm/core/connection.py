@@ -22,7 +22,8 @@ def get_db():
     global _database
     return _database
 
-def get_connection():
+def get_connection(settings):
+    
     return _conn
 
 class ElasticOSMConnection(object):

@@ -25,6 +25,6 @@ class TestModelToo(ElasticModel):
     
     ref = ReferenceField()
     
-class ExtendedField(TestModelToo):
+class ExtendedModel(TestModelToo):
     
     another_field = StringField()

@@ -17,9 +17,9 @@ def check_registry(cls):
         register_model(cls())
 
 class ModelBase(type):
-    """
-    Metaclass for all models.
-    """
+    
+    """Metaclass for all models."""
+    
     def __new__(cls, name, bases, attrs):
 
         super_new = super(ModelBase, cls).__new__
