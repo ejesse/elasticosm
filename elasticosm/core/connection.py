@@ -1,4 +1,4 @@
-from elasticorm.core.exceptions import ElasticORMException
+from elasticosm.core.exceptions import ElasticOSMException
 from importlib import import_module
 import pyes
 import requests
@@ -8,11 +8,11 @@ import simplejson
 servers = ["localhost:9200"]
 
 _conn = pyes.ES(servers)
-_database = 'test_elasticorm'
+_database = 'test_elasticosm'
 
 def __get_es_connection(database):
     if database is None:
-        ElasticORMException("Cannot connect to database 'None'")
+        ElasticOSMException("Cannot connect to database 'None'")
     global _database
     _database = database
     global _conn
@@ -25,7 +25,7 @@ def get_db():
 def get_connection():
     return _conn
 
-class ElasticORMConnection(object):
+class ElasticOSMConnection(object):
     
     def __init__(self,database):
         self.es_conn = __get_es_connection(database)
@@ -49,7 +49,7 @@ def fetch(query):
     type_string=''
     
     if query.elastic_type is not None:
-        from elasticorm.models import ElasticModel
+        from elasticosm.models import ElasticModel
         if query.elastic_type != ElasticModel.__get_elastic_type_name__():
             type_string = "/%s" % (query.elastic_type)
     
@@ -67,7 +67,7 @@ def get(type_name,query_args):
     global servers
     global _database
     
-    from elasticorm.models.queryset import Query
+    from elasticosm.models.queryset import Query
     query = Query.from_query_args(query_args)
     if type_name is not None:
         query.elastic_type = type_name
@@ -122,7 +122,7 @@ def get_by_id(id,type_name=None):
     num_hits = d['hits']['total']
     if num_hits < 1:
         return None
-    from elasticorm.models.registry import model_registry
+    from elasticosm.models.registry import model_registry
     class_type = model_registry[d['hits']['hits'][0]['_type']]
     module = import_module(class_type.__module__)
     _class = getattr(module,class_type.__name__)

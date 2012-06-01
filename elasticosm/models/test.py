@@ -1,4 +1,4 @@
-from elasticorm.models import *
+from elasticosm.models import *
 
 
 class TestModel(ElasticModel):
@@ -24,7 +24,3 @@ class TestModelToo(ElasticModel):
     name = StringField()
     
     ref = ReferenceField()
-    
-class ExtendedField(TestModelToo):
-    
-    another_field = StringField()

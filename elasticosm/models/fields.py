@@ -1,6 +1,6 @@
 from dateutil import parser
-from elasticorm.models.internal_fields import BaseField, NumberField
-from elasticorm.models.base import BaseElasticModel
+from elasticosm.models.internal_fields import BaseField, NumberField
+from elasticosm.models.base import BaseElasticModel
 import datetime
 import pytz
 
@@ -145,7 +145,7 @@ class ReferenceField(BaseField):
     def get_value(self, obj):
         value_id = obj.__fields_values__[self.name]
         if not obj.__reference_cache__.has_key(value_id):
-            from elasticorm.core.connection import get_by_id
+            from elasticosm.core.connection import get_by_id
             referenced_object = get_by_id(value_id)
             obj.__reference_cache__[value_id] = referenced_object
         return obj.__reference_cache__[value_id]

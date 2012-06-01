@@ -1,4 +1,4 @@
-from elasticorm.core.exceptions import ElasticORMException
+from elasticosm.core.exceptions import ElasticOSMException
 from urlparse import parse_qs
 import requests
 import urllib
@@ -22,7 +22,7 @@ class Query(object):
     def add_term(self,k,v):
         
         value = v
-        from elasticorm.models import ElasticModel
+        from elasticosm.models import ElasticModel
         ## term search for id needs to be vs _id
         if k == 'id':
             k = '_id'
@@ -157,8 +157,8 @@ class QuerySet(object):
     def __fetch_items__(self):
         print 'calling fetch'
         print self.query.to_json()
-        from elasticorm.core.connection import fetch
-        from elasticorm.models import ElasticModel
+        from elasticosm.core.connection import fetch
+        from elasticosm.models import ElasticModel
         json = fetch(self.query)
         
         d = simplejson.loads(json.text)

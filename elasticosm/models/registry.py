@@ -1,4 +1,4 @@
-from elasticorm.core.connection import get_db
+from elasticosm.core.connection import get_db
 import simplejson
 import requests
 model_registry = {}
@@ -13,7 +13,7 @@ def register_model(model_instance):
         model_registry[type_name] = model_instance.__class__
         properties = {}
         for field_name, field_instance in model_instance.__fields__.items():
-            from elasticorm.models.fields import StringField, ReferenceField
+            from elasticosm.models.fields import StringField, ReferenceField
             if isinstance(field_instance,StringField):
                 properties[field_name] = __string_field_mapping__
             if isinstance(field_instance,ReferenceField):

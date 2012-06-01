@@ -1,7 +1,7 @@
-from elasticorm.core.connection import save, get, get_by_id, get_count, delete as connection_delete
-from elasticorm.models.registry import model_registry, register_model
-from elasticorm.core.exceptions import MultipleObjectsReturned
-from elasticorm.models.internal_fields import BaseField
+from elasticosm.core.connection import save, get, get_by_id, get_count, delete as connection_delete
+from elasticosm.models.registry import model_registry, register_model
+from elasticosm.core.exceptions import MultipleObjectsReturned
+from elasticosm.models.internal_fields import BaseField
 from importlib import import_module
 import datetime
 import re
@@ -58,7 +58,7 @@ class BaseElasticModel(object):
                 # skip the built-in stuff, db/elastic fields should never be called __something or _something
                 if not attr_name.startswith('_'):
                     #print "%s: %s" % (attr_name, attribute_value)
-                    # is it an elasticorm field?
+                    # is it an elasticosm field?
                     if isinstance(attribute_value,BaseField):
                         self.__add_elastic_field_to_class__(attr_name,attribute_value)
     
@@ -159,7 +159,7 @@ class BaseElasticModel(object):
         global model_registry
         type_name = cls.__get_elastic_type_name__()
         check_registry(cls)
-        from elasticorm.models import ElasticModel
+        from elasticosm.models import ElasticModel
         base_model_type = ElasticModel.__get_elastic_type_name__()
         if type_name == base_model_type:
             type_name = None
@@ -178,7 +178,7 @@ class BaseElasticModel(object):
         global model_registry
         check_registry(cls)
         type_name = cls.__get_elastic_type_name__()
-        from elasticorm.models.queryset import Query, QuerySet
+        from elasticosm.models.queryset import Query, QuerySet
         query = Query.from_query_args(kwargs)
         query.elastic_type = type_name
         qs = QuerySet(query=query)
