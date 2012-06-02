@@ -1,5 +1,4 @@
 from elasticosm.core.connection import save, get, get_by_id, get_count, delete as connection_delete
-from elasticosm.models.registry import model_registry, register_model
 from elasticosm.core.exceptions import MultipleObjectsReturned
 from elasticosm.models.internal_fields import BaseField
 from importlib import import_module
@@ -8,13 +7,6 @@ import re
 import simplejson
 import uuid
 import pytz
-
-
-def check_registry(cls):
-    global model_registry
-    full_name = "%s.%s" % (cls.__module__,cls.__name__)
-    if not model_registry.has_key(full_name):
-        register_model(cls())
 
 class ModelBase(type):
     
@@ -144,7 +136,9 @@ class BaseElasticModel(object):
     @classmethod
     def from_elastic_dict(cls,dict):
         obj_dict = dict['_source']
-        class_type = model_registry[dict['_type']]
+        from elasticosm.models.registry import ModelRegistry
+        registry = ModelRegistry()
+        class_type = registry.model_registry[dict['_type']]
         module = import_module(class_type.__module__)
         _class = getattr(module,class_type.__name__)
         instance = _class()

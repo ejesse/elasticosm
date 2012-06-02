@@ -1,6 +1,5 @@
 from elasticosm.core.exceptions import ElasticOSMException
 from elasticosm.models import ElasticModel
-from elasticosm.models.registry import inheritance_registry
 from urlparse import parse_qs
 import requests
 import simplejson
@@ -64,8 +63,10 @@ class Query(object):
 
         if self.elastic_type is not None:
             if self.elastic_type is not ElasticModel.__get_elastic_type_name__():
-                if inheritance_registry.has_key(self.elastic_type):
-                    sub_types = inheritance_registry[self.elastic_type]
+                from elasticosm.models.registry import ModelRegistry
+                registry = ModelRegistry()
+                if registry.inheritance_registry.has_key(self.elastic_type):
+                    sub_types = registry.inheritance_registry[self.elastic_type]
                     self.types.extend(sub_types)
                     self.types.append(self.elastic_type)
             
@@ -172,11 +173,16 @@ class QuerySet(object):
         json = fetch(self.query)
         
         d = simplejson.loads(json.text)
-        self.num_items = d['hits']['total']
+        if d.has_key('hits'):
+            self.num_items = d['hits']['total']
         
-        for hit in d['hits']['hits']:
-            instance = ElasticModel.from_elastic_dict(hit)
-            self.items.append(instance)
+            for hit in d['hits']['hits']:
+                instance = ElasticModel.from_elastic_dict(hit)
+                self.items.append(instance)
+        else:
+            #FIXME there is probably an error, log
+            pass
+            
         
         self.__initial_fetch__=True
     

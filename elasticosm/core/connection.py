@@ -28,14 +28,17 @@ def get_connection(settings):
 
 class ElasticOSMConnection(object):
     
-    def __init__(self,database):
-        self.es_conn = __get_es_connection(database)
-        self.database = get_db() 
+    def __init__(self,settings):
+        database = settings.default_database
+        servers = settings.servers
+        from elasticosm.models.registry import ModelRegistry
+        register = ModelRegistry()
+        apps = settings.ELASTIC_APPS
+        for app in apps:
+            register.register_models_for_app_name(app)
+        #self.es_conn = __get_es_connection(database)
+        #self.database = get_db() 
     
-    def save(self,obj):
-        
-        self.es_conn.index(obj.__to_elastic_json__(), self.database, obj.__get_elastic_type_name__(), obj.id)
-        
 def save(obj):
     
     response = _conn.index(obj.__to_elastic_json__(), _database, obj.__get_elastic_type_name__(), obj.id)
