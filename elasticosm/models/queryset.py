@@ -19,6 +19,7 @@ class Query(object):
         self.elastic_type = None
         self.start_at = None
         self.types = []
+        self.size=20
 
     def add_term(self,k,v):
         
@@ -100,7 +101,7 @@ class Query(object):
         fields = ["_source"]
         
         query_dict['fields'] = fields
-        query_dict['size'] = 20
+        query_dict['size'] = self.size
         
         return simplejson.dumps(query_dict)
     
@@ -139,6 +140,54 @@ class QuerySet(object):
         
     def __iter__(self):
         return self
+    
+    def __getitem__(self, k):
+        """
+        Retrieves an item or slice from the set of results.
+        """
+        if not isinstance(k, (slice, int, long)):
+            raise TypeError
+        assert ((not isinstance(k, slice) and (k >= 0))
+                or (isinstance(k, slice) and (k.start is None or k.start >= 0)
+                    and (k.stop is None or k.stop >= 0))), \
+                "Negative indexing is not supported."
+
+        if self.cursor is not None:
+            # The result cache has only been partially populated, so we may
+            # need to fill it out a bit more.
+            if isinstance(k, slice):
+                if k.stop is not None:
+                    # Some people insist on passing in strings here.
+                    bound = int(k.stop)
+                else:
+                    bound = None
+            else:
+                bound = k + 1
+            if len(self.items) < bound:
+                diff = bound - len(self.items)
+                ## this might not be the best idea ever...
+                self.query.size = diff+1
+                self.__fetch_items__()
+                #reset the paging
+                self.query.size=20
+        return self.items[k]
+
+        if isinstance(k, slice):
+            if k.start is not None:
+                start = int(k.start)
+            else:
+                start = None
+            if k.stop is not None:
+                stop = int(k.stop)
+            else:
+                stop = None
+            self.query.start_at = start
+            if stop is not None:
+                size = stop - start
+                self.query.size=size
+                self.__fetch_items__()
+                self.query.size=20
+            return self.items
     
     def next(self):
         next_cursor = self.cursor + 1
