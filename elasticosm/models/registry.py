@@ -1,4 +1,4 @@
-from elasticosm.core.connection import get_db
+from elasticosm.core.connection import ElasticOSMConnection
 from elasticosm.models.utils import get_all_base_classes, is_elastic_model
 import importlib
 import simplejson
@@ -36,8 +36,9 @@ class ModelRegistry(object):
             if len(properties.keys()) > 0:
                 mapping_def = {type_name: { 'properties':properties } }
                 mapping_json = simplejson.dumps(mapping_def)
-                db = get_db()
-                uri = "http://localhost:9200/%s/%s/_mapping" % (db,type_name)
+                db = ElasticOSMConnection().get_db()
+                server = ElasticOSMConnection().get_server()
+                uri = "http://%s/%s/%s/_mapping" % (server,db,type_name)
                 print uri
                 r = requests.put(uri,data=mapping_json)
                 print r.text

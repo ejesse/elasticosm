@@ -135,21 +135,29 @@ class QuerySet(object):
         self.cursor=0
         self.query=query
         self.__initial_fetch__ = False
+        self.limit=None
         
     def __iter__(self):
         return self
     
     def next(self):
         next_cursor = self.cursor + 1
-        if self.__initial_fetch__:
-            if self.cursor >= self.num_items:
-                self.cursor = 0
+        ok_to_fetch=True
+        if self.limit is not None:
+            if self.cursor > self.limit:
                 raise StopIteration
-            if next_cursor >= len(self.items) and next_cursor < self.num_items:
-                self.query.start_at = next_cursor
+            elif self.cursor == self.limit:
+                ok_to_fetch=False
+        if ok_to_fetch:
+            if self.__initial_fetch__:
+                if self.cursor >= self.num_items:
+                    self.cursor = 0
+                    raise StopIteration
+                if next_cursor >= len(self.items) and next_cursor < self.num_items:
+                    self.query.start_at = next_cursor
+                    self.__fetch_items__()
+            else:
                 self.__fetch_items__()
-        else:
-            self.__fetch_items__()
 
         item = self.items[self.cursor]
         self.cursor = next_cursor
