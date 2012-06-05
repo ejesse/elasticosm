@@ -152,8 +152,9 @@ class ElasticOSMConnection(object):
         num_hits = d['hits']['total']
         if num_hits < 1:
             return None
-        from elasticosm.models.registry import model_registry
-        class_type = model_registry[d['hits']['hits'][0]['_type']]
+        from elasticosm.models.registry import ModelRegistry
+        registry = ModelRegistry()
+        class_type = registry.model_registry[type_name]
         module = import_module(class_type.__module__)
         _class = getattr(module,class_type.__name__)
         instance = _class()
