@@ -36,109 +36,145 @@ class ElasticOSMConnection(object):
         #self.es_conn = __get_es_connection(database)
         #self.database = get_db()
         return self
-        
-    def get_connection(self):
+
+    def _get_connection(self):
         if self.is_initialized:
             return self.connection
         else:
             raise ElasticOSMConnection('Connection not initialized')
     
-    def get_db(self):
+    def _get_db(self):
         if self.is_initialized:
             return self.default_database 
         else:
             raise ElasticOSMConnection('Connection not initialized')
         
-    def get_server(self):
+    def _get_server(self):
         if self.is_initialized:
             return self.servers[0] 
         else:
             raise ElasticOSMConnection('Connection not initialized')
     
+    @staticmethod
+    def get_connection():
+        return ElasticOSMConnection()._get_connection()
     
+    @staticmethod
+    def get_db():
+        return ElasticOSMConnection()._get_db()
     
-def save(obj):
+    @staticmethod
+    def get_server():
+        return ElasticOSMConnection()._get_server()
     
-    response = ElasticOSMConnection().get_connection().index(obj.__to_elastic_json__(), ElasticOSMConnection().get_db(), obj.__get_elastic_type_name__(), obj.id)
-    return response
-
-def fetch(query):
+    @staticmethod
+    def save(obj):
+        
+        response = ElasticOSMConnection.get_connection().index(obj.__to_elastic_json__(), ElasticOSMConnection.get_db(), obj.__get_elastic_type_name__(), obj.id)
+        return response
     
-    request_json = query.to_json()
-    
-    type_string=''
-    
-    if query.elastic_type is not None:
-        from elasticosm.models import ElasticModel
-        if query.elastic_type != ElasticModel.__get_elastic_type_name__():
-            type_string = "/%s" % (query.elastic_type)
-    
-    
-    uri = "http://%s/%s%s/_search" % (ElasticOSMConnection().get_server(),ElasticOSMConnection().get_db(),type_string)
-    print uri
-    print request_json
-    r = requests.get(uri,data=request_json)
-    
-    return r
-
-    
-def get(type_name,query_args):
-    
-    from elasticosm.models.queryset import Query
-    query = Query.from_query_args(query_args)
-    if type_name is not None:
-        query.elastic_type = type_name
-    
-    return fetch(query)
-
-def get_count(type_name=None):
-
-    if type_name is not None:
-        type_string = "/%s" % (type_name)
-    
-    uri = "http://%s/%s%s/_count" % (ElasticOSMConnection().get_server(),ElasticOSMConnection().get_db(),type_string)
-    r = requests.get(uri)
-    json = r.text
-    d = simplejson.loads(json)
-    return d['count']
-
-def delete(obj):
-
-    if obj.id is None:
-        return False
-    if obj.__get_elastic_type_name__() is None:
-        return False
-    
-    uri = "http://%s/%s/%s/%s" % (ElasticOSMConnection().get_server(),ElasticOSMConnection().get_db(),obj.__get_elastic_type_name__(),obj.id)
-    
-    r = requests.delete(uri).text
-    d = simplejson.loads(r)
-    if d.has_key('found'):
-        if d['found']:
-            if d.has_key('ok'):
-                return d['ok']
-    return False 
-    
-def get_by_id(id,type_name=None):
-    
-    if type_name is not None:
-        uri = "http://%s/%s/%s/%s" % (ElasticOSMConnection().get_server(),ElasticOSMConnection().get_db(),type_name,id)
+    @staticmethod
+    def fetch(query):
+        
+        request_json = query.to_json()
+        
+        type_string=''
+        
+        if query.elastic_type is not None:
+            from elasticosm.models import ElasticModel
+            if query.elastic_type != ElasticModel.__get_elastic_type_name__():
+                type_string = "/%s" % (query.elastic_type)
+        
+        
+        uri = "http://%s/%s%s/_search" % (ElasticOSMConnection.get_server(),ElasticOSMConnection.get_db(),type_string)
         print uri
-        r = requests.get(uri)
-    else:
-        uri = "http://%s/%s/_search?q=id:%s" % (ElasticOSMConnection().get_server(),ElasticOSMConnection().get_db(),id)
-        print uri
-        r = requests.get(uri)
-    d = simplejson.loads(r.text)
-    num_hits = d['hits']['total']
-    if num_hits < 1:
-        return None
-    from elasticosm.models.registry import model_registry
-    class_type = model_registry[d['hits']['hits'][0]['_type']]
-    module = import_module(class_type.__module__)
-    _class = getattr(module,class_type.__name__)
-    instance = _class()
-    obj_dict = d['hits']['hits'][0]['_source']
-    for k,v in obj_dict.items():
-        instance.__setattr__(k,v)
-    return instance
+        print request_json
+        r = requests.get(uri,data=request_json)
+        
+        return r
+    
+    @staticmethod        
+    def get(type_name,query_args):
+        
+        from elasticosm.models.queryset import Query
+        query = Query.from_query_args(query_args)
+        if type_name is not None:
+            query.elastic_type = type_name
+        
+        return ElasticOSMConnection.fetch(query)
+    
+    @staticmethod
+    def get_count(type_name=None):
+    
+        types = [None]
+    
+        if type_name is not None:
+            from elasticosm.models.registry import ModelRegistry
+            registry = ModelRegistry()
+            inheritance_dict = registry.inheritance_registry
+            types = inheritance_dict.get(type_name)
+            types.add(type_name)
+            
+        count = 0
+    
+        #TODO FIXME
+        # this is programmatically lazy and inefficent, 
+        # it's possible to do this in one call with a query
+        for type_name in types:
+            type_string=''
+            if type_name is not None:
+                type_string = "/%s" % (type_name)
+            
+            uri = "http://%s/%s%s/_count" % (ElasticOSMConnection.get_server(),ElasticOSMConnection.get_db(),type_string)
+            r = requests.get(uri)
+            json = r.text
+            d = simplejson.loads(json)
+            count = count + d['count']
+        
+        return count
+    
+    @staticmethod
+    def delete(obj):
+    
+        if obj.id is None:
+            return False
+        if obj.__get_elastic_type_name__() is None:
+            return False
+        
+        uri = "http://%s/%s/%s/%s" % (ElasticOSMConnection().get_server(),ElasticOSMConnection().get_db(),obj.__get_elastic_type_name__(),obj.id)
+        
+        r = requests.delete(uri).text
+        d = simplejson.loads(r)
+        if d.has_key('found'):
+            if d['found']:
+                if d.has_key('ok'):
+                    return d['ok']
+        return False 
+        
+    @staticmethod    
+    def get_by_id(id,type_name=None):
+        
+        if type_name is not None:
+            uri = "http://%s/%s/%s/%s" % (ElasticOSMConnection.get_server(),ElasticOSMConnection.get_db(),type_name,id)
+            print uri
+            r = requests.get(uri)
+        else:
+            uri = "http://%s/%s/_search?q=id:%s" % (ElasticOSMConnection.get_server(),ElasticOSMConnection.get_db(),id)
+            print uri
+            r = requests.get(uri)
+        d = simplejson.loads(r.text)
+        num_hits = d['hits']['total']
+        if num_hits < 1:
+            return None
+        from elasticosm.models.registry import model_registry
+        class_type = model_registry[d['hits']['hits'][0]['_type']]
+        module = import_module(class_type.__module__)
+        _class = getattr(module,class_type.__name__)
+        instance = _class()
+        obj_dict = d['hits']['hits'][0]['_source']
+        for k,v in obj_dict.items():
+            instance.__setattr__(k,v)
+        return instance
+
+        
+        
