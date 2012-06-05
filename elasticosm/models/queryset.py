@@ -47,6 +47,11 @@ class Query(object):
                 self.sort[0] = sort_argument
             else:
                 self.sort.append(sort_argument)
+                
+    def add_exists(self,field_name):
+        
+        self.terms.append({"exists" : { "field" : field_name }})
+        return self
 
     def to_json(self):
         query_dict = {}
@@ -88,7 +93,8 @@ class Query(object):
             filter = {"filter" : {"and":filters}}
                 
         if filter is not None:
-            query_dict['query'] = {"constant_score" : filter}
+            filter['query'] = { "matchAll" : {} }
+            query_dict['query'] = {"filtered" : filter}
             
         if self.start_at is not None:
             query_dict['from'] = self.start_at
@@ -218,8 +224,15 @@ class QuerySet(object):
         return self.num_items
 
     def sort_by(self,sort):
-        if self.query is not None:
-            self.query.add_sort(sort)
+        if self.query is None:
+            self.query = Query()
+        self.query.add_sort(sort)
+        return self
+    
+    def exists(self,field_name):
+        if self.query is None:
+            self.query = Query()
+        self.query.add_exists(field_name)
         return self
         
     def __fetch_items__(self):
