@@ -1,4 +1,4 @@
-from elasticosm.core.connection import save, get, get_by_id, get_count, delete as connection_delete
+from elasticosm.core.connection import ElasticOSMConnection
 from elasticosm.core.exceptions import MultipleObjectsReturned
 from elasticosm.models.internal_fields import BaseField
 from importlib import import_module
@@ -118,20 +118,20 @@ class BaseElasticModel(object):
             v.on_save(self)
         if self.id is None:
             self.id = str(uuid.uuid4())
-        r = save(self)
+        r = ElasticOSMConnection.save(self)
         print r
         
     def get_version(self):
         if self.id is None:
             return 0
-        r = get_by_id(self.type_name,self.id)
+        r = ElasticOSMConnection.get_by_id(self.type_name,self.id)
         d = simplejson.loads(r.text)
         version = d['_version']
         return version
 
     @classmethod
     def count(cls):
-        return get_count(cls.__get_elastic_type_name__())
+        return ElasticOSMConnection.get_count(cls.__get_elastic_type_name__())
 
     @classmethod
     def from_elastic_dict(cls,dict):
@@ -153,7 +153,7 @@ class BaseElasticModel(object):
         base_model_type = ElasticModel.__get_elastic_type_name__()
         if type_name == base_model_type:
             type_name = None
-        r = get(type_name,kwargs)
+        r = ElasticOSMConnection.get(type_name,kwargs)
         d = simplejson.loads(r.text)
         num_hits = d['hits']['total']
         if num_hits < 1:
@@ -177,5 +177,5 @@ class BaseElasticModel(object):
         return cls.filter({})
     
     def delete(self):
-        return connection_delete(self)
+        return ElasticOSMConnection.delete(self)
     

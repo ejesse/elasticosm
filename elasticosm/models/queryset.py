@@ -225,9 +225,9 @@ class QuerySet(object):
     def __fetch_items__(self):
         print 'calling fetch'
         print self.query.to_json()
-        from elasticosm.core.connection import fetch
+        from elasticosm.core.connection import ElasticOSMConnection
         from elasticosm.models import ElasticModel
-        json = fetch(self.query)
+        json = ElasticOSMConnection.fetch(self.query)
         
         d = simplejson.loads(json.text)
         if d.has_key('hits'):
