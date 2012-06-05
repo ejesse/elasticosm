@@ -106,33 +106,19 @@ class ElasticOSMConnection(object):
     @staticmethod
     def get_count(type_name=None):
     
-        types = [None]
-    
         if type_name is not None:
             from elasticosm.models.registry import ModelRegistry
             registry = ModelRegistry()
-            inheritance_dict = registry.inheritance_registry
-            types = inheritance_dict.get(type_name)
-            types.add(type_name)
+            class_type = registry.model_registry[type_name]
+            module = import_module(class_type.__module__)
+            _class = getattr(module,class_type.__name__)
+            instance = _class()
+        else:
+            from elasticosm.models import ElasticModel
+            instance = ElasticModel
             
-        count = 0
-    
-        #TODO FIXME
-        # this is programmatically lazy and inefficent, 
-        # it's possible to do this in one call with a query
-        for type_name in types:
-            type_string=''
-            if type_name is not None:
-                type_string = "/%s" % (type_name)
-            
-            uri = "http://%s/%s%s/_count" % (ElasticOSMConnection.get_server(),ElasticOSMConnection.get_db(),type_string)
-            r = requests.get(uri)
-            json = r.text
-            d = simplejson.loads(json)
-            count = count + d['count']
+        return instance.filter().count()
         
-        return count
-    
     @staticmethod
     def delete(obj):
     
