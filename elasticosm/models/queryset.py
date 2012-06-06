@@ -1,5 +1,7 @@
 from elasticosm.core.exceptions import ElasticOSMException
 from elasticosm.models import ElasticModel
+from pyes.filters import TermFilter, ORFilter, ANDFilter, ExistsFilter
+from pyes.query import FilteredQuery, MatchAllQuery, StringQuery
 from urlparse import parse_qs
 import requests
 import simplejson
@@ -16,10 +18,12 @@ class Query(object):
         self.sort = [{'created_date' : {'order':'desc'}}]
         self.term_operand = 'and'
         self.terms = []
+        self.search_term = None
         self.elastic_type = None
         self.start_at = None
         self.types = []
         self.size=20
+        self.search_query = MatchAllQuery()
 
     def add_term(self,k,v):
         
@@ -30,7 +34,7 @@ class Query(object):
             k = '_id'
         if isinstance(v,ElasticModel):
             value = v.id
-        term = {"term" : {k : value}}
+        term = TermFilter(k,value)
         self.terms.append(term)
         
     def add_sort(self,sort_arg):
@@ -50,8 +54,52 @@ class Query(object):
                 
     def add_exists(self,field_name):
         
-        self.terms.append({"exists" : { "field" : field_name }})
+        self.terms.append(ExistsFilter(field_name))
         return self
+    
+    def to_es_query(self):
+        if self.search_term is not None:
+            self.search_query = StringQuery(self.search_term)
+
+        filters = []
+
+        if self.elastic_type is not None:
+            if self.elastic_type is not ElasticModel.__get_elastic_type_name__():
+                from elasticosm.models.registry import ModelRegistry
+                registry = ModelRegistry()
+                if registry.inheritance_registry.has_key(self.elastic_type):
+                    sub_types = registry.inheritance_registry[self.elastic_type]
+                    self.types.extend(sub_types)
+                    self.types.append(self.elastic_type)
+
+        if len(self.types) > 0:
+            types = []
+            for type_string in self.types:
+                type_term = TermFilter('_type',type_string)
+                types.append(type_term)
+            type_filter = ORFilter(types)
+            filters.append(type_filter)
+            self.elastic_type = None
+            
+        if len(self.terms) > 0:
+            if self.term_operand == 'or':
+                term_query = ORFilter(self.terms)
+            else:
+                term_query = ANDFilter(self.terms)
+            filters.append(term_query)
+            
+        if len(filters) > 0:
+            andq = ANDFilter(filters)
+            q = FilteredQuery(self.search_query, andq)
+        else:
+            q = self.search_query
+        
+        q.size = self.size
+        q.start = self.start_at
+        q.sort = self.sort
+        
+        return q
+        
 
     def to_json(self):
         query_dict = {}
@@ -137,7 +185,7 @@ class Query(object):
 class QuerySet(object):
     
     def __init__(self,query=None):
-        self.items = []
+        self.items = None
         self.num_items = 0
         self.cursor=0
         self.query=query
@@ -148,80 +196,25 @@ class QuerySet(object):
         return self
     
     def __getitem__(self, k):
-        """
-        Retrieves an item or slice from the set of results.
-        """
-        if not isinstance(k, (slice, int, long)):
-            raise TypeError
-        assert ((not isinstance(k, slice) and (k >= 0))
-                or (isinstance(k, slice) and (k.start is None or k.start >= 0)
-                    and (k.stop is None or k.stop >= 0))), \
-                "Negative indexing is not supported."
-
-        if self.cursor is not None:
-            # The result cache has only been partially populated, so we may
-            # need to fill it out a bit more.
-            if isinstance(k, slice):
-                if k.stop is not None:
-                    # Some people insist on passing in strings here.
-                    bound = int(k.stop)
-                else:
-                    bound = None
-            else:
-                bound = k + 1
-            if len(self.items) < bound:
-                diff = bound - len(self.items)
-                ## this might not be the best idea ever...
-                self.query.size = diff+1
-                self.__fetch_items__()
-                #reset the paging
-                self.query.size=20
-        return self.items[k]
-
-        if isinstance(k, slice):
-            if k.start is not None:
-                start = int(k.start)
-            else:
-                start = None
-            if k.stop is not None:
-                stop = int(k.stop)
-            else:
-                stop = None
-            self.query.start_at = start
-            if stop is not None:
-                size = stop - start
-                self.query.size=size
-                self.__fetch_items__()
-                self.query.size=20
-            return self.items
+        self.__initialize_items__()
+        from elasticosm.models import ElasticModel
+        item = self.items.__getitem__(k)
+        instance = ElasticModel.from_pyes_model(item)
+        return instance
     
     def next(self):
-        next_cursor = self.cursor + 1
-        ok_to_fetch=True
-        if self.limit is not None:
-            if self.cursor > self.limit:
-                raise StopIteration
-            elif self.cursor == self.limit:
-                ok_to_fetch=False
-        if ok_to_fetch:
-            if self.__initial_fetch__:
-                if self.cursor >= self.num_items:
-                    self.cursor = 0
-                    raise StopIteration
-                if next_cursor >= len(self.items) and next_cursor < self.num_items:
-                    self.query.start_at = next_cursor
-                    self.__fetch_items__()
-            else:
-                self.__fetch_items__()
-
-        item = self.items[self.cursor]
-        self.cursor = next_cursor
-        return item
+        from elasticosm.models import ElasticModel
+        self.__initialize_items__()
+        try:
+            item = self.items.next()
+            instance = ElasticModel.from_pyes_model(item)
+            return instance
+        except Exception, e:
+            raise e
             
     def count(self):
-        if not self.__initial_fetch__:
-            self.__fetch_items__()
-        return self.num_items
+        self.__initialize_items__()
+        return self.items.count()
 
     def sort_by(self,sort):
         if self.query is None:
@@ -234,30 +227,9 @@ class QuerySet(object):
             self.query = Query()
         self.query.add_exists(field_name)
         return self
-        
-    def __fetch_items__(self):
-        print 'calling fetch'
-        print self.query.to_json()
-        from elasticosm.core.connection import ElasticOSMConnection
-        from elasticosm.models import ElasticModel
-        json = ElasticOSMConnection.fetch(self.query)
-        
-        d = simplejson.loads(json.text)
-        if d.has_key('hits'):
-            self.num_items = d['hits']['total']
-        
-            for hit in d['hits']['hits']:
-                instance = ElasticModel.from_elastic_dict(hit)
-                self.items.append(instance)
-        else:
-            #FIXME there is probably an error, log
-            pass
-            
-        
-        self.__initial_fetch__=True
     
-    def __repr__(self):
-        if not self.__initial_fetch__ and self.query is not None:
-            self.__fetch_items__()
-        return self.items.__repr__()
-    
+    def __initialize_items__(self):
+        if not self.items:
+            from elasticosm.core.connection import ElasticOSMConnection
+            conn = ElasticOSMConnection()
+            self.items = conn.connection.search(query=self.query.to_es_query(),indices=conn.get_db())

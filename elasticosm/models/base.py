@@ -119,7 +119,6 @@ class BaseElasticModel(object):
         if self.id is None:
             self.id = str(uuid.uuid4())
         r = ElasticOSMConnection.save(self)
-        print r
         
     def get_version(self):
         if self.id is None:
@@ -143,6 +142,18 @@ class BaseElasticModel(object):
         _class = getattr(module,class_type.__name__)
         instance = _class()
         for k,v in obj_dict.items():
+            instance.__setattr__(k,v)
+        return instance
+
+    @classmethod
+    def from_pyes_model(cls,pyes_model):
+        from elasticosm.models.registry import ModelRegistry
+        registry = ModelRegistry()
+        class_type = registry.model_registry[pyes_model._meta.type]
+        module = import_module(class_type.__module__)
+        _class = getattr(module,class_type.__name__)
+        instance = _class()
+        for k,v in pyes_model.items():
             instance.__setattr__(k,v)
         return instance
 

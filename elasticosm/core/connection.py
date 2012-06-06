@@ -73,35 +73,15 @@ class ElasticOSMConnection(object):
         response = ElasticOSMConnection.get_connection().index(obj.__to_elastic_json__(), ElasticOSMConnection.get_db(), obj.__get_elastic_type_name__(), obj.id)
         return response
     
-    @staticmethod
-    def fetch(query):
-        
-        request_json = query.to_json()
-        
-        type_string=''
-        
-        if query.elastic_type is not None:
-            from elasticosm.models import ElasticModel
-            if query.elastic_type != ElasticModel.__get_elastic_type_name__():
-                type_string = "/%s" % (query.elastic_type)
-        
-        
-        uri = "http://%s/%s%s/_search" % (ElasticOSMConnection.get_server(),ElasticOSMConnection.get_db(),type_string)
-        print uri
-        print request_json
-        r = requests.get(uri,data=request_json)
-        
-        return r
-    
     @staticmethod        
     def get(type_name,query_args):
         
-        from elasticosm.models.queryset import Query
+        from elasticosm.models.queryset import Query,QuerySet
         query = Query.from_query_args(query_args)
         if type_name is not None:
             query.elastic_type = type_name
         
-        return ElasticOSMConnection.fetch(query)
+        return QuerySet(query=query)
     
     @staticmethod
     def get_count(type_name=None):
@@ -139,29 +119,8 @@ class ElasticOSMConnection(object):
         
     @staticmethod    
     def get_by_id(id,type_name=None):
-        
-        if type_name is not None:
-            uri = "http://%s/%s/%s/%s" % (ElasticOSMConnection.get_server(),ElasticOSMConnection.get_db(),type_name,id)
-            print uri
-            r = requests.get(uri)
-        else:
-            uri = "http://%s/%s/_search?q=id:%s" % (ElasticOSMConnection.get_server(),ElasticOSMConnection.get_db(),id)
-            print uri
-            r = requests.get(uri)
-        d = simplejson.loads(r.text)
-        num_hits = d['hits']['total']
-        if num_hits < 1:
-            return None
-        from elasticosm.models.registry import ModelRegistry
-        registry = ModelRegistry()
-        class_type = registry.model_registry[type_name]
-        module = import_module(class_type.__module__)
-        _class = getattr(module,class_type.__name__)
-        instance = _class()
-        obj_dict = d['hits']['hits'][0]['_source']
-        for k,v in obj_dict.items():
-            instance.__setattr__(k,v)
-        return instance
+        from elasticosm.models import ElasticModel
+        return ElasticModel.filter(id=id)[0]
 
         
         
