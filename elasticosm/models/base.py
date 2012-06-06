@@ -165,14 +165,11 @@ class BaseElasticModel(object):
         if type_name == base_model_type:
             type_name = None
         r = ElasticOSMConnection.get(type_name,kwargs)
-        d = simplejson.loads(r.text)
-        num_hits = d['hits']['total']
-        if num_hits < 1:
+        if r.count() < 1:
             return None
-        if num_hits > 1:
+        if r.count() > 1:
             raise MultipleObjectsReturned('Multiple objects returned for query %s' % kwargs)
-        obj_dict = d['hits']['hits'][0]
-        return cls.from_elastic_dict(obj_dict)
+        return r[0]
     
     @classmethod
     def filter(cls,*args,**kwargs):
