@@ -122,7 +122,33 @@ class CreationDateTimeField(DateTimeField):
             d = datetime.datetime.utcnow()
             d = d.replace(tzinfo=pytz.utc)
             self.set_value(obj, d)
+
+class ListField(BaseField):        
+
+    def __init__(self, *args, **kwargs):
+        super(ListField,self).__init__(*args, **kwargs)
         
+    def set_value(self,obj,value):
+        if value is None:
+            obj.__fields_values__[self.name] = None
+        else:
+            if not isinstance(value,list):
+                raise TypeError('Cant set FloatField to non-list type')
+            obj.__fields_values__[self.name] = value
+
+    def get_value(self, obj):
+        value = obj.__fields_values__[self.name]
+        if value is None:
+            # can't work with None, so give caller
+            # a new empty list
+            obj.__fields_values__[self.name] = []
+        return obj.__fields_values__[self.name]
+    
+    def on_save(self,obj):
+        # don't store an empty list in ES
+        if obj.__fields_values__[self.name] == []:
+            obj.__fields_values__[self.name] = None
+
         
 class ReferenceField(BaseField):
 

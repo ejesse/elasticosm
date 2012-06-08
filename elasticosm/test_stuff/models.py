@@ -28,3 +28,8 @@ class TestModelToo(ElasticModel):
 class ExtendedModel(TestModelToo):
     
     another_field = StringField()
+    
+    
+class TestModeLWithList(TestModel):
+    
+    list_field = ListField()
