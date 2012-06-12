@@ -148,6 +148,7 @@ class ListField(BaseField):
         # don't store an empty list in ES
         if obj.__fields_values__[self.name] == []:
             obj.__fields_values__[self.name] = None
+        
 
         
 class ReferenceField(BaseField):

@@ -23,7 +23,7 @@ class TestModelToo(ElasticModel):
 
     name = StringField()
     
-    ref = ReferenceField()
+    ref_field = ReferenceField()
     
 class ExtendedModel(TestModelToo):
     

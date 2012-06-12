@@ -1,7 +1,7 @@
 from elasticosm.core.connection import ElasticOSMConnection
 from elasticosm.models import StringField, ReferenceField
 from elasticosm.models.registry import ModelRegistry
-from elasticosm.test_stuff.models import TestModelToo
+from elasticosm.test_stuff.models import TestModelToo, TestModel
 from random import choice
 import requests
 import time
@@ -28,7 +28,9 @@ def create_and_save_non_bulk(num_docs=10000):
             eitheror = choice([True,False])
             if eitheror:
                 if last_thing is not None:
-                    inst.ref=last_thing
+                    print inst
+                    print last_thing
+                    inst.ref_field=last_thing
         string_fields = []
         for k,v in inst.__fields__.items():
             if v.__class__ is StringField:
@@ -50,6 +52,15 @@ def create_and_save_non_bulk(num_docs=10000):
     
     print "Created and stored %s docs in %s seconds with %s failures" % (num_docs,elapsed,errors)
 
+def just_make_objects(docs=1000):
+    start=time.time()
+    l=[]
+    for i in range(1,docs):
+        t=TestModel()
+        l.append(t)
+    end = time.time()
+    elapsed = end - start
+    print "created %s objects in %s seconds" % (docs,elapsed)
 
 def create_objects(num_docs=10000):
 
@@ -71,7 +82,7 @@ def create_objects(num_docs=10000):
             eitheror = choice([True,False])
             if eitheror:
                 if last_thing is not None:
-                    inst.ref=last_thing
+                    inst.ref_field=last_thing
         string_fields = []
         for k,v in inst.__fields__.items():
             if v.__class__ is StringField:

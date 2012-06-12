@@ -16,6 +16,7 @@ class ModelRegistry(object):
     __shared_state = dict(
         model_registry = {},
         inheritance_registry={},
+        instance_registry={},
     )
     
     def __init__(self):
@@ -26,6 +27,7 @@ class ModelRegistry(object):
         type_name = model_instance.__get_elastic_type_name__()
         if not self.model_registry.has_key(type_name):
             self.model_registry[type_name] = model_instance.__class__
+            self.instance_registry[type_name] = model_instance.__class__()
             properties = {}
             for field_name, field_instance in model_instance.__fields__.items():
                 from elasticosm.models.fields import StringField, ReferenceField

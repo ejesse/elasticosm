@@ -1,12 +1,14 @@
 from elasticosm.core.connection import ElasticOSMConnection
 from elasticosm.core.exceptions import MultipleObjectsReturned
 from elasticosm.models.internal_fields import BaseField
+from elasticosm.models.registry import ModelRegistry
 from importlib import import_module
 import datetime
 import re
 import simplejson
 import uuid
 import pytz
+import copy
 
 class ModelBase(type):
     
@@ -37,24 +39,34 @@ class BaseElasticModel(object):
     
     def __init__(self, *args, **kwargs):
         
-        if self.__class__ != BaseElasticModel:
-        
-            self.__fields__ = {}
-            self.__fields_values__ = {}
-            self.__reference_cache__ = {}
+        registry = ModelRegistry()
+        origin = registry.instance_registry.get(self.__get_elastic_type_name__(),None)
+        if origin is not None:
+            self.__fields__ = origin.__fields__ 
+            self.__fields_values__ = origin.__fields_values__.copy()
+            self.__reference_cache__ = origin.__reference_cache__.copy()
             self.id = None
             
-            # get and set parent class stuff
-            self.__add_fields_from_class_hierarchy__(self.__class__)
-            for attr_name,attribute_value in self.__class__.__dict__.items():
-                # skip the built-in stuff, db/elastic fields should never be called __something or _something
-                if not attr_name.startswith('_'):
-                    #print "%s: %s" % (attr_name, attribute_value)
-                    # is it an elasticosm field?
-                    if isinstance(attribute_value,BaseField):
-                        self.__add_elastic_field_to_class__(attr_name,attribute_value)
-    
-            self.id = None
+        else:
+        
+            if self.__class__ != BaseElasticModel:
+            
+                self.__fields__ = {}
+                self.__fields_values__ = {}
+                self.__reference_cache__ = {}
+                self.id = None
+                
+                # get and set parent class stuff
+                self.__add_fields_from_class_hierarchy__(self.__class__)
+                for attr_name,attribute_value in self.__class__.__dict__.items():
+                    # skip the built-in stuff, db/elastic fields should never be called __something or _something
+                    if not attr_name.startswith('_'):
+                        #print "%s: %s" % (attr_name, attribute_value)
+                        # is it an elasticosm field?
+                        if isinstance(attribute_value,BaseField):
+                            self.__add_elastic_field_to_class__(attr_name,attribute_value)
+        
+                self.id = None
 
     def __add_fields_from_class_hierarchy__(self,cls):
         for base in cls.__bases__:
@@ -88,7 +100,7 @@ class BaseElasticModel(object):
             return super(BaseElasticModel,self).__setattr__(name, value)
        
     def __getattribute__(self, name, *args, **kwargs):
-        
+        # TODO FIXME find a way to get rid of isintance here (slow)
         ret_val = super(BaseElasticModel,self).__getattribute__(name, *args, **kwargs)
         if isinstance(ret_val,BaseField):
             if self.__fields__.has_key(name):
