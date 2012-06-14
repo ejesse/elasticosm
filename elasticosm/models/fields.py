@@ -56,6 +56,7 @@ class LongField(NumberField):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
+            value = long(value)
             if not isinstance(value,long):
                 raise TypeError('Cant set LongField to non-string (long) type')
             obj.__fields_values__[self.name] = value
@@ -69,6 +70,7 @@ class FloatField(NumberField):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
+            value = float(value)
             if not isinstance(value,float):
                 raise TypeError('Cant set FloatField to non-string (float) type')
             obj.__fields_values__[self.name] = value

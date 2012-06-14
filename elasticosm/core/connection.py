@@ -27,6 +27,7 @@ class ElasticOSMConnection(object):
         self.default_database = settings.default_database
         self.servers = settings.servers
         self.connection = pyes.ES(self.servers)
+        self.connection.create_index_if_missing(self.default_database)
         self.is_initialized=True
         from elasticosm.models.registry import ModelRegistry
         register = ModelRegistry()

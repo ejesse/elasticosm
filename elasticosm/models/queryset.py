@@ -186,7 +186,6 @@ class QuerySet(object):
     
     def __init__(self,query=None):
         self.items = None
-        self.num_items = 0
         self.cursor=0
         self.query=query
         self.__initial_fetch__ = False
@@ -232,4 +231,5 @@ class QuerySet(object):
         if not self.items:
             from elasticosm.core.connection import ElasticOSMConnection
             conn = ElasticOSMConnection()
-            self.items = conn.connection.search(query=self.query.to_es_query(),indices=conn.get_db())
+            
+            self.items = conn.connection.search(query=self.query.to_es_query(),indices=conn.get_db())            

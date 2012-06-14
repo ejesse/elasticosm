@@ -42,8 +42,12 @@ class BaseElasticModel(object):
         registry = ModelRegistry()
         origin = registry.instance_registry.get(self.__get_elastic_type_name__(),None)
         if origin is not None:
-            self.__fields__ = origin.__fields__ 
+            # we can use the same field instances for this model
+            # across all model instances
+            self.__fields__ = origin.__fields__
+            # but there might be default values 
             self.__fields_values__ = origin.__fields_values__.copy()
+            # and the default values might be reference fields
             self.__reference_cache__ = origin.__reference_cache__.copy()
             self.id = None
             
