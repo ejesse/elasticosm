@@ -40,7 +40,8 @@ class ModelRegistry(object):
                 mapping_json = simplejson.dumps(mapping_def)
                 db = ElasticOSMConnection.get_db()
                 server = ElasticOSMConnection.get_server()
-                uri = "http://%s/%s/%s/_mapping" % (server,db,type_name)
+                http_server = server.replace(":9500",":9200")
+                uri = "http://%s/%s/%s/_mapping" % (http_server,db,type_name)
                 print uri
                 r = requests.put(uri,data=mapping_json)
                 print r.text
