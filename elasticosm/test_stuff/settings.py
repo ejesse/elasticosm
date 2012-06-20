@@ -5,6 +5,6 @@ ELASTIC_APPS = (
         'elasticosm.test_more_stuff',
         )
 
-servers = ["localhost:9200"]
+servers = ["localhost:9500"]
 
 default_database = 'test_elasticosm'

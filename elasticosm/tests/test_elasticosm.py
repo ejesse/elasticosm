@@ -16,7 +16,7 @@ class Settings(object):
 settings = Settings() 
 settings.ELASTIC_APPS = ()
 
-settings.servers = ["localhost:9200"]
+settings.servers = ["localhost:9500"]
 
 settings.default_database = 'elasticosm_unittests'
 
