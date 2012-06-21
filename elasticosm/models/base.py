@@ -117,8 +117,8 @@ class BaseElasticModel(object):
     @classmethod            
     def __get_elastic_type_name__(cls):
         return "%s.%s" % (cls.__module__,cls.__name__)
-            
-    def __to_elastic_json__(self):
+
+    def __to_elastic_dict__(self):
         d = {}
         for k,v in self.__fields_values__.items():
             if v is not None:
@@ -127,6 +127,10 @@ class BaseElasticModel(object):
                     value = v.isoformat()
                 d[k] = value
         d['id'] = self.id
+        return d
+    
+    def __to_elastic_json__(self):
+        d = self.__to_elastic_dict__()
         return simplejson.dumps(d)
     
     def save(self):

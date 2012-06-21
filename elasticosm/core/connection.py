@@ -71,7 +71,7 @@ class ElasticOSMConnection(object):
     @staticmethod
     def save(obj):
         
-        response = ElasticOSMConnection.get_connection().index(obj.__to_elastic_json__(), ElasticOSMConnection.get_db(), obj.__get_elastic_type_name__(), obj.id)
+        response = ElasticOSMConnection.get_connection().index(obj.__to_elastic_dict__(), ElasticOSMConnection.get_db(), obj.__get_elastic_type_name__(), obj.id)
         return response
     
     @staticmethod        
