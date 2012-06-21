@@ -135,7 +135,7 @@ class ListField(BaseField):
             obj.__fields_values__[self.name] = None
         else:
             if not isinstance(value,list):
-                raise TypeError('Cant set FloatField to non-list type')
+                raise TypeError('Cant set ListField to non-list type')
             obj.__fields_values__[self.name] = value
 
     def get_value(self, obj):
@@ -174,8 +174,8 @@ class ReferenceField(BaseField):
     def get_value(self, obj):
         value_id = obj.__fields_values__[self.name]
         if not obj.__reference_cache__.has_key(value_id):
-            from elasticosm.core.connection import get_by_id
-            referenced_object = get_by_id(value_id)
+            from elasticosm.core.connection import ElasticOSMConnection
+            referenced_object = ElasticOSMConnection.get_by_id(value_id)
             obj.__reference_cache__[value_id] = referenced_object
         return obj.__reference_cache__[value_id]
     
