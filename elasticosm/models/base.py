@@ -116,7 +116,10 @@ class BaseElasticModel(object):
 
     @classmethod            
     def __get_elastic_type_name__(cls):
-        return "%s.%s" % (cls.__module__,cls.__name__)
+        full_type_name = "%s.%s" % (cls.__module__,cls.__name__)
+        # elastic suggests NOT using dots, so use hyphens
+        # since hyphens are not valid in Python 
+        return full_type_name.replace(".","-")
 
     def __to_elastic_dict__(self):
         d = {}
@@ -133,11 +136,15 @@ class BaseElasticModel(object):
         d = self.__to_elastic_dict__()
         return simplejson.dumps(d)
     
+    def pre_save(self):
+        pass
+    
     def save(self):
         for v in self.__fields__.values():
             v.on_save(self)
         if self.id is None:
             self.id = str(uuid.uuid4())
+        self.pre_save()
         r = ElasticOSMConnection.save(self)
         
     def get_version(self):
