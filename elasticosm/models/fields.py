@@ -1,6 +1,7 @@
 from dateutil import parser
 from elasticosm.models.internal_fields import BaseField, NumberField
 from elasticosm.models.base import BaseElasticModel
+from elasticosm.models.utils import slugify
 import datetime
 import pytz
 
@@ -33,6 +34,23 @@ class SearchField(StringField):
             if not isinstance(value,unicode):
                 raise TypeError('Cant set TextField to non-string (str) type')
             obj.__fields_values__[self.name] = value
+            
+class SlugField(StringField):
+    
+    def __init__(self, *args, **kwargs):
+        super(SlugField,self).__init__(*args, **kwargs)
+        
+    def set_value(self,obj,value):
+        if value is None:
+            obj.__fields_values__[self.name] = None
+        else:
+            if isinstance(value,str):
+                value = unicode(value)
+            if not isinstance(value,unicode):
+                raise TypeError('Cant set StringField to non-string (str) type')
+            obj.__fields_values__[self.name] = slugify(value)
+        
+
         
 class IntField(NumberField):
     
