@@ -176,9 +176,11 @@ class Query(object):
             elif k == 'operand':
                 if v == 'or':
                     query.term_operand = 'or'
+            elif k == 'search_term':
+                query.search_term = v
             else:
                 query.add_term(k, v)
-    
+        print query
         return query
     
 

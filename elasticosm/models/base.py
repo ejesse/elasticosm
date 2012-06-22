@@ -149,6 +149,17 @@ class BaseElasticModel(object):
         return version
 
     @classmethod
+    def search(cls,search_term,**kwargs):
+        type_name = cls.__get_elastic_type_name__()
+        from elasticosm.models.queryset import Query, QuerySet
+        query_args = kwargs
+        query_args['search_term'] = search_term
+        query = Query.from_query_args(query_args)
+        query.elastic_type = type_name
+        qs = QuerySet(query=query)
+        return qs
+    
+    @classmethod
     def count(cls):
         return ElasticOSMConnection.get_count(cls.__get_elastic_type_name__())
 

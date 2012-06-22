@@ -57,6 +57,13 @@ class ElasticOSMConnection(object):
             raise ElasticOSMConnection('Connection not initialized')
     
     @staticmethod
+    def search(type_name, search_term, **kwargs):
+    
+        query_args = kwargs
+        query_args['search_term'] = search_term
+        return ElasticOSMConnection.get(type_name, query_args)
+    
+    @staticmethod
     def get_connection():
         return ElasticOSMConnection()._get_connection()
     
