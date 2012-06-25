@@ -1,7 +1,7 @@
 from dateutil import parser
-from elasticosm.models.internal_fields import BaseField, NumberField
 from elasticosm.models.base import BaseElasticModel
-from elasticosm.models.utils import slugify
+from elasticosm.models.internal_fields import BaseField, NumberField
+from elasticosm.models.utils import slugify, get_timezone_aware_utc_time
 import datetime
 import pytz
 
@@ -131,17 +131,13 @@ class DateTimeField(BaseField):
 class AutoDateTimeField(DateTimeField):
     
     def on_save(self,obj):
-        d = datetime.datetime.utcnow()
-        d = d.replace(tzinfo=pytz.utc)
-        self.set_value(obj, d)
+        self.set_value(obj, get_timezone_aware_utc_time())
         
 class CreationDateTimeField(DateTimeField):
         
     def on_save(self,obj):
         if obj.id is None:
-            d = datetime.datetime.utcnow()
-            d = d.replace(tzinfo=pytz.utc)
-            self.set_value(obj, d)
+            self.set_value(obj, get_timezone_aware_utc_time())
 
 class ListField(BaseField):        
 

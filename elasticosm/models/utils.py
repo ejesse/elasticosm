@@ -1,3 +1,5 @@
+import datetime
+import pytz
 import re
 
 _slugify_strip_re = re.compile(r'[^\w\s-]')
@@ -36,3 +38,8 @@ def is_elastic_model(cls):
         if b == ElasticModel:
             return True
     return False
+
+def get_timezone_aware_utc_time():
+    d = datetime.datetime.utcnow()
+    d = d.replace(tzinfo=pytz.utc)
+    return d
