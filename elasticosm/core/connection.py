@@ -14,6 +14,7 @@ class ElasticOSMConnection(object):
     __shared_state = dict(
         databases = [],
         servers=[],
+        encryption_key=None,
         connection=None,
         default_database=None,
         is_initialized=False,
@@ -29,6 +30,10 @@ class ElasticOSMConnection(object):
         self.connection = pyes.ES(self.servers)
         self.connection.create_index_if_missing(self.default_database)
         self.is_initialized=True
+        try:
+            self.encryption_key=settings.TOKEN_ENCRYPTION_KEY
+        except:
+            pass
         from elasticosm.models.registry import ModelRegistry
         register = ModelRegistry()
         apps = settings.ELASTIC_APPS

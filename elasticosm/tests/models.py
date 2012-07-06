@@ -5,6 +5,8 @@ class TestModel(ElasticModel):
     string_field = StringField()
     
     search_field = SearchField()
+    
+    encrypted_field = StringField(encrypt_field=True)
 
     int_field = IntField()
     

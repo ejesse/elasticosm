@@ -6,6 +6,7 @@ import requests
 import inspect
 
 __string_field_mapping__ = {"analyzer": "keyword", "type": "string"}
+__encrypted_field_mapping__ = {"type" : "string","store" : "no","index" : "no", "include_in_all" : "false"}
 
 
 class ModelRegistry(object):
@@ -35,6 +36,8 @@ class ModelRegistry(object):
                     properties[field_name] = __string_field_mapping__
                 if isinstance(field_instance,ReferenceField):
                     properties[field_name] = __string_field_mapping__
+                if field_instance.is_encrypted:
+                    properties[field_name] =__encrypted_field_mapping__
             if len(properties.keys()) > 0:
                 mapping_def = {type_name: { 'properties':properties } }
                 mapping_json = simplejson.dumps(mapping_def)
@@ -44,10 +47,11 @@ class ModelRegistry(object):
                 uri = "http://%s/%s/%s/_mapping" % (http_server,db,type_name)
                 r = requests.put(uri,data=mapping_json)
                 outcome = simplejson.loads(r.text)
-                if outcome['ok']:
-                    print "Registered model %s on database %s" % (type_name,db)
+                if outcome.has_key('ok'):
+                    if outcome['ok']:
+                        print "Registered model %s on database %s" % (type_name,db)
                 else:
-                    print "Failed to register model %s on database %s" % (type_name,db)
+                    print "Failed to register model %s on database %s with error: %s" % (type_name,db,outcome.get('error',None))
                 
     def register_models_for_app_name(self,app_name):
         models_module = importlib.import_module("%s.%s" % (app_name,'models'))

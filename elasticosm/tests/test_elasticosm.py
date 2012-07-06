@@ -5,6 +5,7 @@ import copy
 from elasticosm.core.connection import ElasticOSMConnection
 from elasticosm.models.registry import ModelRegistry
 from elasticosm.tests.models import TestModel
+from rsa._version133 import encrypt
 
 """Configurations"""
 
@@ -17,11 +18,13 @@ settings.ELASTIC_APPS = ()
 settings.servers = ["localhost:9500"]
 
 settings.default_database = 'elasticosm_unittests'
+settings.TOKEN_ENCRYPTION_KEY = 'XsP57dv/pAMvK5yCVyfAuyhlyYoCarNvQ01aQz9/kzOSYABt9UZFUmQq/aGr0R1kFsXhf7tFxCE='
 
 """ dummy values """
 
 string_field_test_value = 'this is a string field' 
-search_field_test_value = 'this is a search field' 
+search_field_test_value = 'this is a search field'
+encrypted_field_test_value = 'this is an encrypted field'
 int_field_test_value = 85498430
 long_field_test_value = long(4839483)
 float_field_test_value = float(4533654)
@@ -33,6 +36,7 @@ datetime_field_test_value = datetime.datetime.utcnow()
 def assign_test_values_to_fields(model_instance):
     model_instance.string_field = str(string_field_test_value)
     model_instance.search_field = str(search_field_test_value)
+    model_instance.encrypted_field = str(encrypted_field_test_value)
     model_instance.int_field = int(int_field_test_value)
     model_instance.long_field = long(long_field_test_value)
     model_instance.float_field = float(float_field_test_value)
@@ -88,6 +92,23 @@ class ElasticosmTests(unittest.TestCase):
         
         self.assertEqual(t.id, queried_model.id)
 
+    def test_encrypt_decrypt(self):
+
+        registry = ModelRegistry()
+        t = TestModel()
+        conn = ElasticOSMConnection().connect(settings)
+        registry.register_model(t)
+        
+        t = TestModel()
+        assign_test_values_to_fields(t)
+        t.save()
+        
+        # give it a second to add to the index
+        sleep(1)
+        
+        queried_model = TestModel.get(id=t.id)
+        
+        self.assertEqual(queried_model.encrypted_field, encrypted_field_test_value)
     
     def test_query(self):
         registry = ModelRegistry()
@@ -122,7 +143,7 @@ class ElasticosmTests(unittest.TestCase):
     @classmethod        
     def tearDownClass(cls):
         conn = ElasticOSMConnection().connect(settings)
-        conn.connection.delete_index_if_exists(settings.default_database)
+        #conn.connection.delete_index_if_exists(settings.default_database)
         
 if __name__ == '__main__':
     unittest.main()

@@ -1,14 +1,16 @@
 from elasticosm.core.connection import ElasticOSMConnection
-from elasticosm.core.exceptions import MultipleObjectsReturned
+from elasticosm.core.exceptions import MultipleObjectsReturned, \
+    ElasticOSMException
+from elasticosm.encryption.encryption import Cryptographer
 from elasticosm.models.internal_fields import BaseField
 from elasticosm.models.registry import ModelRegistry
 from importlib import import_module
+import copy
 import datetime
+import pytz
 import re
 import simplejson
 import uuid
-import pytz
-import copy
 
 class ModelBase(type):
     
@@ -128,6 +130,12 @@ class BaseElasticModel(object):
                 value = v
                 if isinstance(v,datetime.datetime):
                     value = v.isoformat()
+                if self.__fields__[k].is_encrypted:
+                    conn = ElasticOSMConnection()
+                    if conn.encryption_key is None:
+                        raise ElasticOSMException('Cannot encrypt field without encryption key')
+                    cryptographer = Cryptographer(key_string=conn.encryption_key)
+                    value = cryptographer.encrypt(v)
                 d[k] = value
         d['id'] = self.id
         return d
@@ -192,7 +200,15 @@ class BaseElasticModel(object):
         _class = getattr(module,class_type.__name__)
         instance = _class()
         for k,v in pyes_model.items():
-            instance.__setattr__(k,v)
+            value = v
+            if k != 'id':
+                if instance.__fields__[k].is_encrypted:
+                    conn = ElasticOSMConnection()
+                    if conn.encryption_key is None:
+                        raise ElasticOSMException('Cannot decrypt field without encryption key')
+                    cryptographer = Cryptographer(key_string=conn.encryption_key)
+                    value = unicode(cryptographer.decrypt(v))
+            instance.__setattr__(k,value)
         return instance
 
     @classmethod
