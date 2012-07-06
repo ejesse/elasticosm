@@ -42,9 +42,12 @@ class ModelRegistry(object):
                 server = ElasticOSMConnection.get_server()
                 http_server = server.replace(":9500",":9200")
                 uri = "http://%s/%s/%s/_mapping" % (http_server,db,type_name)
-                print uri
                 r = requests.put(uri,data=mapping_json)
-                print r.text
+                outcome = simplejson.loads(r.text)
+                if outcome['ok']:
+                    print "Registered model %s on database %s" % (type_name,db)
+                else:
+                    print "Failed to register model %s on database %s" % (type_name,db)
                 
     def register_models_for_app_name(self,app_name):
         models_module = importlib.import_module("%s.%s" % (app_name,'models'))
