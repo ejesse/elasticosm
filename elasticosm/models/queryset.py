@@ -180,7 +180,6 @@ class Query(object):
                 query.search_term = v
             else:
                 query.add_term(k, v)
-        print query
         return query
     
 
@@ -233,5 +232,5 @@ class QuerySet(object):
         if not self.items:
             from elasticosm.core.connection import ElasticOSMConnection
             conn = ElasticOSMConnection()
-            
+            #print self.query.to_es_query().to_search_json()
             self.items = conn.connection.search(query=self.query.to_es_query(),indices=conn.get_db())            
