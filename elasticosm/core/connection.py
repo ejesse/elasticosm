@@ -114,15 +114,10 @@ class ElasticOSMConnection(object):
             return False
         if obj.__get_elastic_type_name__() is None:
             return False
-        server = ElasticOSMConnection().get_server().replace('9500','9200')
-        uri = "http://%s/%s/%s/%s" % (server,ElasticOSMConnection().get_db(),obj.__get_elastic_type_name__(),obj.id)
-        print 'calling delete at %s' % uri
-        r = requests.delete(uri).text
-        d = simplejson.loads(r)
-        if d.has_key('found'):
-            if d['found']:
-                if d.has_key('ok'):
-                    return d['ok']
+        conn = ElasticOSMConnection()._get_connection()
+        result = conn.delete(ElasticOSMConnection().get_db(),obj.__get_elastic_type_name__(),obj.id)
+        if result.has_key('ok'):
+            return result['ok']
         return False 
         
     @staticmethod    
