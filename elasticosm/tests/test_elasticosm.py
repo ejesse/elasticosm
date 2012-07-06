@@ -1,6 +1,4 @@
 from time import sleep
-import os
-import random
 import unittest
 import datetime
 import copy
@@ -43,6 +41,15 @@ def assign_test_values_to_fields(model_instance):
 
 class ElasticosmTests(unittest.TestCase):
 
+    @classmethod
+    def setUpClass(cls):
+        registry = ModelRegistry()
+        t = TestModel()
+        conn = ElasticOSMConnection().connect(settings)
+        registry.register_model(t)
+        
+        t = TestModel()
+
     def test_field_assignment(self):
         
         t = TestModel()
@@ -54,24 +61,6 @@ class ElasticosmTests(unittest.TestCase):
         self.assertEqual(t.boolean_field, boolean_field_test_value)
         self.assertEqual(t.date_time_field, datetime_field_test_value)
         
-    def test_connection(self):
-        
-        conn = ElasticOSMConnection().connect(settings)
-
-    def test_index_creation(self):
-        
-        conn = ElasticOSMConnection().connect(settings)
-        conn.connection.create_index_if_missing(conn.default_database)
-        
-    def test_register_model(self):
-        
-        registry = ModelRegistry()
-        t = TestModel()
-        conn = ElasticOSMConnection().connect(settings)
-        registry.register_model(t)
-        
-        t = TestModel()
-
     def test_save_model(self):
         registry = ModelRegistry()
         t = TestModel()
@@ -105,9 +94,13 @@ class ElasticosmTests(unittest.TestCase):
         t = TestModel()
         conn = ElasticOSMConnection().connect(settings)
         registry.register_model(t)
-        
+        assign_test_values_to_fields(t)
+        t.save()
+        # give it a second to add to the index
+        sleep(1)
         queried_models = TestModel.filter(string_field=string_field_test_value)
-        
+        models_found = queried_models.count()
+        self.assertGreater(models_found, 0, "Only %s TestModels returned from query, should have found at least 1" % (models_found))
         for m in queried_models:
             self.assertEqual(m.string_field, string_field_test_value)
         
@@ -120,13 +113,14 @@ class ElasticosmTests(unittest.TestCase):
         t = TestModel()
         t.string_field = 'delete me'
         t.save()
+        sleep(1)
         t.delete()
-        
+        sleep(1)
         test_deletes_rs = TestModel.filter(string_field='delete me')
         self.assertEqual(test_deletes_rs.count(), 0)
-        
-    def tearDown(self):
-        unittest.TestCase.tearDown(self)
+
+    @classmethod        
+    def tearDownClass(cls):
         conn = ElasticOSMConnection().connect(settings)
         conn.connection.delete_index_if_exists(settings.default_database)
         
