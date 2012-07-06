@@ -114,9 +114,9 @@ class ElasticOSMConnection(object):
             return False
         if obj.__get_elastic_type_name__() is None:
             return False
-        
-        uri = "http://%s/%s/%s/%s" % (ElasticOSMConnection().get_server(),ElasticOSMConnection().get_db(),obj.__get_elastic_type_name__(),obj.id)
-        
+        server = ElasticOSMConnection().get_server().replace('9500','9200')
+        uri = "http://%s/%s/%s/%s" % (server,ElasticOSMConnection().get_db(),obj.__get_elastic_type_name__(),obj.id)
+        print 'calling delete at %s' % uri
         r = requests.delete(uri).text
         d = simplejson.loads(r)
         if d.has_key('found'):
