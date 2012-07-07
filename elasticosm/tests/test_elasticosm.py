@@ -5,9 +5,10 @@ import copy
 from elasticosm.core.connection import ElasticOSMConnection
 from elasticosm.models.registry import ModelRegistry
 from elasticosm.tests.models import TestModel
+from elasticosm.tests.lorem import LOREM
 from rsa._version133 import encrypt
 
-"""Configurations"""
+""" Config """
 
 class Settings(object):
     pass
@@ -23,7 +24,7 @@ settings.TOKEN_ENCRYPTION_KEY = 'XsP57dv/pAMvK5yCVyfAuyhlyYoCarNvQ01aQz9/kzOSYAB
 """ dummy values """
 
 string_field_test_value = 'this is a string field' 
-search_field_test_value = 'this is a search field'
+search_field_test_value = LOREM
 encrypted_field_test_value = 'this is an encrypted field'
 int_field_test_value = 85498430
 long_field_test_value = long(4839483)
@@ -31,7 +32,7 @@ float_field_test_value = float(4533654)
 boolean_field_test_value = True
 datetime_field_test_value = datetime.datetime.utcnow()
 
-"""Unit tests"""
+""" Unit tests """
 
 def assign_test_values_to_fields(model_instance):
     model_instance.string_field = str(string_field_test_value)
@@ -143,7 +144,7 @@ class ElasticosmTests(unittest.TestCase):
     @classmethod        
     def tearDownClass(cls):
         conn = ElasticOSMConnection().connect(settings)
-        #conn.connection.delete_index_if_exists(settings.default_database)
+        conn.connection.delete_index_if_exists(settings.default_database)
         
 if __name__ == '__main__':
     unittest.main()
