@@ -9,7 +9,7 @@ import copy
 import datetime
 import pytz
 import re
-import simplejson
+import json
 import uuid
 
 class ModelBase(type):
@@ -142,7 +142,7 @@ class BaseElasticModel(object):
     
     def __to_elastic_json__(self):
         d = self.__to_elastic_dict__()
-        return simplejson.dumps(d)
+        return json.dumps(d)
     
     def pre_save(self):
         pass
@@ -159,7 +159,7 @@ class BaseElasticModel(object):
         if self.id is None:
             return 0
         r = ElasticOSMConnection.get_by_id(self.type_name,self.id)
-        d = simplejson.loads(r.text)
+        d = json.loads(r.text)
         version = d['_version']
         return version
 

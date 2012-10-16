@@ -1,12 +1,13 @@
-from time import sleep
-import unittest
-import datetime
-import copy
 from elasticosm.core.connection import ElasticOSMConnection
+from elasticosm.core.exceptions import UniqueFieldExistsException
 from elasticosm.models.registry import ModelRegistry
-from elasticosm.tests.models import TestModel
 from elasticosm.tests.lorem import LOREM
+from elasticosm.tests.models import TestModel, TestModelWithUniqueField
 from rsa._version133 import encrypt
+from time import sleep
+import copy
+import datetime
+import unittest
 
 """ Config """
 
@@ -140,6 +141,37 @@ class ElasticosmTests(unittest.TestCase):
         sleep(1)
         test_deletes_rs = TestModel.filter(string_field='delete me')
         self.assertEqual(test_deletes_rs.count(), 0)
+
+    def save_model(self,m):
+        m.save()
+
+    def test_uniques(self):
+        
+        registry = ModelRegistry()
+        t = TestModelWithUniqueField()
+        conn = ElasticOSMConnection().connect(settings)
+        registry.register_model(t)
+        
+        t.string_field_not_unique = 'not unique'
+        t.string_field_unique = 'should be unique'
+        
+        t.save()
+        
+        t2 = TestModelWithUniqueField()
+        
+        t2.string_field_not_unique = 'still not unique'
+        t2.string_field_unique = 'should be unique'
+        
+        t3 = TestModelWithUniqueField()
+        
+        t3.string_field_not_unique = 'not unique'
+        t3.string_field_unique = 'should be unique but different this time'
+        t3.save()
+        
+        with self.assertRaises(UniqueFieldExistsException):
+            self.save_model(t2)
+        
+        
 
     @classmethod        
     def tearDownClass(cls):

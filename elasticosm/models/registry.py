@@ -1,7 +1,7 @@
 from elasticosm.core.connection import ElasticOSMConnection
 from elasticosm.models.utils import get_all_base_classes, is_elastic_model
 import importlib
-import simplejson
+import json
 import requests
 import inspect
 
@@ -40,13 +40,13 @@ class ModelRegistry(object):
                     properties[field_name] =__encrypted_field_mapping__
             if len(properties.keys()) > 0:
                 mapping_def = {type_name: { 'properties':properties } }
-                mapping_json = simplejson.dumps(mapping_def)
+                mapping_json = json.dumps(mapping_def)
                 db = ElasticOSMConnection.get_db()
                 server = ElasticOSMConnection.get_server()
                 http_server = server.replace(":9500",":9200")
                 uri = "http://%s/%s/%s/_mapping" % (http_server,db,type_name)
                 r = requests.put(uri,data=mapping_json)
-                outcome = simplejson.loads(r.text)
+                outcome = json.loads(r.text)
                 if outcome.has_key('ok'):
                     if outcome['ok']:
                         print "Registered model %s on database %s" % (type_name,db)

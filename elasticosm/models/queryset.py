@@ -4,7 +4,7 @@ from pyes.filters import TermFilter, ORFilter, ANDFilter, ExistsFilter
 from pyes.query import FilteredQuery, MatchAllQuery, StringQuery
 from urlparse import parse_qs
 import requests
-import simplejson
+import json
 import urllib
 
 """
@@ -157,7 +157,7 @@ class Query(object):
         query_dict['fields'] = fields
         query_dict['size'] = self.size
         
-        return simplejson.dumps(query_dict)
+        return json.dumps(query_dict)
     
     @staticmethod
     def from_query_args(query_args):

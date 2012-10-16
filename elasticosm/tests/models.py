@@ -19,3 +19,9 @@ class TestModel(ElasticModel):
     date_time_field = DateTimeField()
     
     reference_field = ReferenceField()
+    
+class TestModelWithUniqueField(ElasticModel):
+    
+    string_field_not_unique = StringField()
+    
+    string_field_unique = StringField(unique=True)
