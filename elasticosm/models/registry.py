@@ -1,5 +1,4 @@
 from elasticosm.core.connection import ElasticOSMConnection
-from elasticosm.models.base import BaseElasticModel
 from elasticosm.models.utils import get_all_base_classes, is_elastic_model
 import importlib
 import inspect
@@ -57,16 +56,24 @@ class ModelRegistry(object):
     def register_models_for_app_name(self,app_name):
         models_module = importlib.import_module("%s.%s" % (app_name,'models'))
         from elasticosm.models import ElasticModel
+        if self.inheritance_registry.has_key(ElasticModel.__get_elastic_type_name__()):
+            all_inherited_types = self.inheritance_registry[ElasticModel.__get_elastic_type_name__()]
+        else:
+            all_inherited_types = set()
         for k,v in models_module.__dict__.items():
             if inspect.isclass(v):
                 if is_elastic_model(v):
                     self.register_model(v())
                     bases = get_all_base_classes(v)
                     for base in bases:
-                        if is_elastic_model(base) and (not base is BaseElasticModel):
+                        if is_elastic_model(base) and (not base is ElasticModel):
                             if self.inheritance_registry.has_key(base.__get_elastic_type_name__()):
                                 inherited_types = self.inheritance_registry[base.__get_elastic_type_name__()]
                             else:
                                 inherited_types = set()
                             inherited_types.add(v.__get_elastic_type_name__())
+                            all_inherited_types.add(v.__get_elastic_type_name__())
                             self.inheritance_registry[base.__get_elastic_type_name__()] = inherited_types
+        self.inheritance_registry[ElasticModel.__get_elastic_type_name__()] = all_inherited_types
+                            
+                            
