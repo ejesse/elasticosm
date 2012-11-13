@@ -33,9 +33,9 @@ def get_all_base_classes(cls):
 
 def is_elastic_model(cls):
     all_bases = get_all_base_classes(cls)
-    from elasticosm.models import ElasticModel
+    from elasticosm.models import BaseElasticModel
     for b in all_bases:
-        if b == ElasticModel:
+        if b == BaseElasticModel:
             return True
     return False
 

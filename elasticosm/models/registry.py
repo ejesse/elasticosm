@@ -1,9 +1,10 @@
 from elasticosm.core.connection import ElasticOSMConnection
+from elasticosm.models.base import BaseElasticModel
 from elasticosm.models.utils import get_all_base_classes, is_elastic_model
 import importlib
+import inspect
 import json
 import requests
-import inspect
 
 __string_field_mapping__ = {"analyzer": "keyword", "type": "string"}
 __encrypted_field_mapping__ = {"type" : "string","store" : "no","index" : "no", "include_in_all" : "false"}
@@ -62,7 +63,7 @@ class ModelRegistry(object):
                     self.register_model(v())
                     bases = get_all_base_classes(v)
                     for base in bases:
-                        if is_elastic_model(base) and (not base is ElasticModel):
+                        if is_elastic_model(base) and (not base is BaseElasticModel):
                             if self.inheritance_registry.has_key(base.__get_elastic_type_name__()):
                                 inherited_types = self.inheritance_registry[base.__get_elastic_type_name__()]
                             else:
