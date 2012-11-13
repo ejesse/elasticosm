@@ -162,6 +162,18 @@ class BaseElasticModel(object):
         d = json.loads(r.text)
         version = d['_version']
         return version
+    
+    def __repr__(self):
+        try:
+            u = unicode(self)
+        except (UnicodeEncodeError, UnicodeDecodeError):
+            u = '[Bad Unicode data]'
+        return '<%s: %s>' % (self.__class__.__name__, u)
+
+    def __str__(self):
+        if hasattr(self, '__unicode__'):
+            return self.__unicode__().encode('utf-8')
+        return '%s object' % self.__class__.__name__
 
     @classmethod
     def search(cls,search_term,**kwargs):
