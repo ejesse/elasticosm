@@ -32,12 +32,11 @@ class Query(object):
         values = v
         from elasticosm.models import ElasticModel
         ## term search for id needs to be vs _id
-        if isinstance(v,list):
-            if not k.endswith('__in'):
+        if k.endswith('__in'):
+            if not isinstance(v,list):
                 values = [v]
-            else:
-                k = k.rstrip('__in')
-                self.term_operand = 'or'
+            k = k.rstrip('__in')
+            self.term_operand = 'or'
         if k == 'id':
             k = '_id'
         for value in values:
