@@ -1,6 +1,6 @@
 from elasticosm.core.connection import ElasticOSMConnection
 from elasticosm.core.exceptions import UniqueFieldExistsException
-from pyes.exceptions import DocumentAlreadyExistsException
+from pyes.exceptions import AlreadyExistsException
 
 
 class BaseField(object):
@@ -28,7 +28,7 @@ class BaseField(object):
                 unique_data = {'_id':obj.__fields_values__[self.name],'_type':unique_field_key}
                 try:
                     ElasticOSMConnection.get_connection().index(unique_data,ElasticOSMConnection.get_uniques_db(),unique_data['_id'],unique_data['_type'],op_type='create')
-                except DocumentAlreadyExistsException:
+                except AlreadyExistsException:
                     raise UniqueFieldExistsException('Value %s exists for field %s' % (unique_data['_id'],self.name))
         
 class NumberField(BaseField):
