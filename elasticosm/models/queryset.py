@@ -6,6 +6,8 @@ from urlparse import parse_qs
 import requests
 import json
 import urllib
+import logging
+logger = logging.getLogger(__name__)
 
 """
 Super naive basic query object
@@ -70,7 +72,7 @@ class Query(object):
                 if registry.inheritance_registry.has_key(self.elastic_type):
                     sub_types = registry.inheritance_registry[self.elastic_type]
                     self.types.extend(sub_types)
-                    self.types.append(self.elastic_type)
+                self.types.append(self.elastic_type)
 
         if len(self.types) > 0:
             types = []
@@ -228,9 +230,12 @@ class QuerySet(object):
         self.query.add_exists(field_name)
         return self
     
+    def get_query_as_json(self):
+        return self.query.to_es_query().to_search_json()
+    
     def __initialize_items__(self):
         if not self.items:
             from elasticosm.core.connection import ElasticOSMConnection
             conn = ElasticOSMConnection()
-            #print self.query.to_es_query().to_search_json()
+            logger.debug(self.query.to_es_query().to_search_json())
             self.items = conn.connection.search(query=self.query.to_es_query(),indices=conn.get_db())            
