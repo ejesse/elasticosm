@@ -165,7 +165,45 @@ class ListField(BaseField):
         if obj.__fields_values__[self.name] == []:
             obj.__fields_values__[self.name] = None
         
+class MultiReferenceField(BaseField):
 
+    def __init__(self, *args, **kwargs):
+        super(MultiReferenceField,self).__init__(*args, **kwargs)
+
+
+    ## THIS DOESN'T WORK AT ALL
+    def get_value(self,obj):
+        value = obj.__fields_values__[self.name]
+        if value is None:
+            # can't work with None, so give caller
+            # a new empty list
+            obj.__fields_values__[self.name] = []
+        if obj.__fields_values__[self.name] is []:
+            from elasticosm.models import ElasticModel
+            return ElasticModel.filter(id__in=value)
+        else:
+            return obj.__fields_values__[self.name]
+        
+    def set_value(self,obj,value):
+        if value is None:
+            obj.__fields_values__[self.name] = None
+        else:
+            if not isinstance(value,list):
+                raise TypeError('Cant set ListField to non-list type')
+            obj.__fields_values__[self.name] = value
+            
+    def on_save(self,obj):
+        if obj.__fields_values__[self.name] == []:
+            obj.__fields_values__[self.name] = None
+        if obj.__fields_values__[self.name] is not None:
+            temp_values = []
+            for referenced_obj in obj.__fields_values__[self.name]:
+                if isinstance(referenced_obj,BaseElasticModel):
+                    if referenced_obj.id is None:
+                        referenced_obj.save()
+                    temp_values.append(referenced_obj.id)
+                else:
+                    temp_values.append(referenced_obj)
         
 class ReferenceField(BaseField):
 

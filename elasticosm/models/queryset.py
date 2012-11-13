@@ -29,15 +29,24 @@ class Query(object):
 
     def add_term(self,k,v):
         
-        value = v
+        values = v
         from elasticosm.models import ElasticModel
         ## term search for id needs to be vs _id
+        if isinstance(v,list):
+            if not k.endswith('__in'):
+                values = [v]
+            else:
+                k = k.rstrip('__in')
+                self.term_operand = 'or'
         if k == 'id':
             k = '_id'
-        if isinstance(v,ElasticModel):
-            value = v.id
-        term = TermFilter(k,value)
-        self.terms.append(term)
+        for value in values:
+            add_value = value
+            if isinstance(value,ElasticModel):
+                add_value = value.id
+            term = TermFilter(k,add_value)
+            self.terms.append(term)
+            
         
     def add_sort(self,sort_arg):
         sort_dir = 'desc'
