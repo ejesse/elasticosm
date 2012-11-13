@@ -1,6 +1,6 @@
 httplib2==0.7.4
 pyOpenSSL==0.12
-pyes==0.16.0
+pyes==0.19.1
 python-dateutil==1.5
 readline==6.2.2
 thrift==0.8.0
