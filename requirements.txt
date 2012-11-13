@@ -4,3 +4,6 @@ pyes==0.16.0
 python-dateutil==1.5
 readline==6.2.2
 thrift==0.8.0
+pycrypto==2.6
+pytz==2012h
+requests==0.14.2
