@@ -64,15 +64,16 @@ class ModelRegistry(object):
             if inspect.isclass(v):
                 if is_elastic_model(v):
                     self.register_model(v())
+                    all_inherited_types.add(v.__get_elastic_type_name__())
                     bases = get_all_base_classes(v)
                     for base in bases:
                         if is_elastic_model(base) and (not base is ElasticModel):
+                            all_inherited_types.add(base.__get_elastic_type_name__())
                             if self.inheritance_registry.has_key(base.__get_elastic_type_name__()):
                                 inherited_types = self.inheritance_registry[base.__get_elastic_type_name__()]
                             else:
                                 inherited_types = set()
                             inherited_types.add(v.__get_elastic_type_name__())
-                            all_inherited_types.add(v.__get_elastic_type_name__())
                             self.inheritance_registry[base.__get_elastic_type_name__()] = inherited_types
         self.inheritance_registry[ElasticModel.__get_elastic_type_name__()] = all_inherited_types
                             
