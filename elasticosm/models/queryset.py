@@ -30,11 +30,12 @@ class Query(object):
     def add_term(self,k,v):
         
         values = v
+        if not isinstance(v,list):
+            values = [v]
         from elasticosm.models import ElasticModel
         ## term search for id needs to be vs _id
         if k.endswith('__in'):
-            if not isinstance(v,list):
-                values = [v]
+            
             k = k.rstrip('__in')
             self.term_operand = 'or'
         if k == 'id':
