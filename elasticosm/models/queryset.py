@@ -205,16 +205,48 @@ class QuerySet(object):
         self.query=query
         self.__initial_fetch__ = False
         self.limit=None
+
+    def _tuple_from_slice(self, i):
+        """
+        Get (start, end, step) tuple from slice object.
+        """
+        (start, end, step) = i.indices(len(self.items))
+        # Replace (0, -1, 1) with (0, 0, 1) (misfeature in .indices()).
+        if step == 1:
+            if end < start:
+                end = start
+                step = None
+        if i.step == None:
+            step = None
+        return (start, end, step)
         
     def __iter__(self):
         return self
-    
-    def __getitem__(self, k):
-        self.__initialize_items__()
+        #self.__initialize_items__()
+        #if self.items is None:
+        #    items = []
+        #else:
+        #    items = self.items
+        #for i in items:
+        #    yield i
+        
+    def __return_elastic_model(self,k):
         from elasticosm.models import ElasticModel
         item = self.items.__getitem__(k)
         instance = ElasticModel.from_pyes_model(item)
         return instance
+        
+    def __getitem__(self, k):
+        self.__initialize_items__()
+        if isinstance(k, slice):
+            (start, end, step) = self._tuple_from_slice(k)
+            if step == None:
+                indices = xrange(start, end)
+            else:
+                indices = xrange(start, end, step)
+            return [self.__return_elastic_model(k) for k in indices]
+        else:
+            return self.__return_elastic_model(k)
     
     def next(self):
         from elasticosm.models import ElasticModel
