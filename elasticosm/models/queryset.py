@@ -107,7 +107,10 @@ class Query(object):
         
         q.size = self.size
         q.start = self.start_at
-        q.sort = self.sort
+        if len(self.sort) == 1:
+            q.sort = self.sort[0]
+        else:
+            q.sort = self.sort
         
         return q
         
@@ -242,9 +245,15 @@ class QuerySet(object):
     def get_query_as_json(self):
         return self.query.to_es_query().to_search_json()
     
+    def unpack_query_sort(self, query):
+        if isinstance(query.sort,list):
+            field = query.sort[0].keys()[0]
+            direction = query.sort[0].get(field).get('order')
+            return "%s:%s" % (field,direction)
+    
     def __initialize_items__(self):
         if not self.items:
             from elasticosm.core.connection import ElasticOSMConnection
             conn = ElasticOSMConnection()
             logger.debug(self.query.to_es_query().to_search_json())
-            self.items = conn.connection.search(query=self.query.to_es_query(),indices=conn.get_db())            
+            self.items = conn.connection.search(query=self.query.to_es_query(),indices=conn.get_db(),sort=self.unpack_query_sort(self.query))            
