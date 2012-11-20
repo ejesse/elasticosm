@@ -52,6 +52,13 @@ class ElasticOSMConnection(object):
         #self.database = get_db()
         return self
 
+    def get_registered_models(self):
+        from elasticosm.models.registry import ModelRegistry
+        registry = ModelRegistry()
+        all_models = registry.model_registry
+        all_models.pop('elasticosm-models-ElasticModel')
+        return all_models
+
     def _get_connection(self):
         if self.is_initialized:
             return self.connection
