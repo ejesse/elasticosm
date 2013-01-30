@@ -4,152 +4,165 @@ from elasticosm.models.internal_fields import BaseField, NumberField
 from elasticosm.models.utils import slugify, get_timezone_aware_utc_time
 from elasticosm.models.references import ReferenceObject
 import datetime
-import pytz
+
 
 class StringField(BaseField):
-    
+
     def __init__(self, *args, **kwargs):
-        super(StringField,self).__init__(*args, **kwargs)
-        
-    def set_value(self,obj,value):
+        super(StringField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
-            if isinstance(value,str):
+            if isinstance(value, str):
                 value = unicode(value)
-            if not isinstance(value,unicode):
+            if not isinstance(value, unicode):
                 raise TypeError('Cant set StringField to non-string (str) type')
             obj.__fields_values__[self.name] = value
-        
+
+
 class SearchField(StringField):
 
     def __init__(self, *args, **kwargs):
-        super(SearchField,self).__init__(*args, **kwargs)
-        
-    def set_value(self,obj,value):
+        super(SearchField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
-            if isinstance(value,str):
+            if isinstance(value, str):
                 value = unicode(value)
-            if not isinstance(value,unicode):
+            if not isinstance(value, unicode):
                 raise TypeError('Cant set TextField to non-string (str) type')
             obj.__fields_values__[self.name] = value
-            
+
+
 class SlugField(StringField):
-    
+
     def __init__(self, *args, **kwargs):
-        super(SlugField,self).__init__(*args, **kwargs)
-        
-    def set_value(self,obj,value):
+        super(SlugField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
-            if isinstance(value,str):
+            if isinstance(value, str):
                 value = unicode(value)
-            if not isinstance(value,unicode):
-                raise TypeError('Cant set StringField to non-string (str) type')
+            if not isinstance(value, unicode):
+                raise TypeError('Cant set StringField to non-string ' + \
+                                    '(str) type')
             obj.__fields_values__[self.name] = slugify(value)
-        
 
-        
+
 class IntField(NumberField):
-    
-    def __init__(self, *args, **kwargs):
-        super(IntField,self).__init__(*args, **kwargs)
 
-    def set_value(self,obj,value):
+    def __init__(self, *args, **kwargs):
+        super(IntField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
-            if not isinstance(value,int):
+            if not isinstance(value, int):
                 raise TypeError('Cant set IntField to non-string (int) type')
             obj.__fields_values__[self.name] = value
-        
-class LongField(NumberField):
-    
-    def __init__(self, *args, **kwargs):
-        super(LongField,self).__init__(*args, **kwargs)
 
-    def set_value(self,obj,value):
+
+class LongField(NumberField):
+
+    def __init__(self, *args, **kwargs):
+        super(LongField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
             value = long(value)
-            if not isinstance(value,long):
+            if not isinstance(value, long):
                 raise TypeError('Cant set LongField to non-string (long) type')
             obj.__fields_values__[self.name] = value
-        
+
+
 class FloatField(NumberField):
-    
+
     def __init__(self, *args, **kwargs):
-        super(FloatField,self).__init__(*args, **kwargs)
-        
-    def set_value(self,obj,value):
+        super(FloatField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
             value = float(value)
-            if not isinstance(value,float):
-                raise TypeError('Cant set FloatField to non-string (float) type')
+            if not isinstance(value, float):
+                raise TypeError('Cant set FloatField to ' + \
+                                'non-string (float) type')
             obj.__fields_values__[self.name] = value
-        
+
+
 class BooleanField(BaseField):
 
     def __init__(self, *args, **kwargs):
-        super(BooleanField,self).__init__(*args, **kwargs)
-        
-    def set_value(self,obj,value):
+        super(BooleanField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
-            if not isinstance(value,bool):
-                raise TypeError('Cant set BooleanField to non-string (bool) type')
+            if not isinstance(value, bool):
+                raise TypeError('Cant set BooleanField to non-string ' + \
+                                '(bool) type')
             obj.__fields_values__[self.name] = value
-        
+
+
 class DateTimeField(BaseField):
-        
+
     def __init__(self, *args, **kwargs):
-        super(DateTimeField,self).__init__(*args, **kwargs)
-        
-    def set_value(self,obj,value):
+        super(DateTimeField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
-            if isinstance(value,str):
+            if isinstance(value, str):
                 value = unicode(value)
-            if isinstance(value,unicode):
+            if isinstance(value, unicode):
                 try:
                     v = parser.parse(value)
                     obj.__fields_values__[self.name] = v
                 except ValueError, e:
-                    raise TypeError('Unable to set DateTimeField to parsed value of %s due to %s' % (value, e))
-            elif not isinstance(value,datetime.datetime):
-                raise TypeError('Cant set DateTimeField to non-string (datetime.datetime) type')
+                    raise TypeError('Unable to set DateTimeField to ' + \
+                                'parsed value of %s due to %s' % (value, e))
+            elif not isinstance(value, datetime.datetime):
+                raise TypeError('Cant set DateTimeField to non-string ' + \
+                                '(datetime.datetime) type')
             else:
                 obj.__fields_values__[self.name] = value
-                
+
+
 class AutoDateTimeField(DateTimeField):
-    
-    def on_save(self,obj):
+
+    def on_save(self, obj):
         self.set_value(obj, get_timezone_aware_utc_time())
-        
+
+
 class CreationDateTimeField(DateTimeField):
-        
-    def on_save(self,obj):
+
+    def on_save(self, obj):
         if obj.id is None:
             self.set_value(obj, get_timezone_aware_utc_time())
 
-class ListField(BaseField):        
+
+class ListField(BaseField):
 
     def __init__(self, *args, **kwargs):
-        super(ListField,self).__init__(*args, **kwargs)
-        
-    def set_value(self,obj,value):
+        super(ListField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
-            if not isinstance(value,list):
+            if not isinstance(value, list):
                 raise TypeError('Cant set ListField to non-list type')
             obj.__fields_values__[self.name] = value
 
@@ -160,46 +173,46 @@ class ListField(BaseField):
             # a new empty list
             obj.__fields_values__[self.name] = []
         return obj.__fields_values__[self.name]
-    
-    def on_save(self,obj):
+
+    def on_save(self, obj):
         # don't store an empty list in ES
         if obj.__fields_values__[self.name] == []:
             obj.__fields_values__[self.name] = None
 
-## DOESN'T WORK        
+
+## DOESN'T WORK
 class MultiReferenceField(BaseField):
     """ This doesn't work yet
     """
     def __init__(self, *args, **kwargs):
-        super(MultiReferenceField,self).__init__(*args, **kwargs)
-
+        super(MultiReferenceField, self).__init__(*args, **kwargs)
 
     ## THIS DOESN'T WORK AT ALL
-    def get_value(self,obj):
+    def get_value(self, obj):
         value = obj.__fields_values__[self.name]
         if value is None:
             # can't work with None, so give caller
             # a new empty list
             obj.__fields_values__[self.name] = []
         return obj.__fields_values__[self.name]
-        
-    def set_value(self,obj,value):
+
+    def set_value(self, obj, value):
         if value is None:
             obj.__fields_values__[self.name] = None
         else:
-            if not isinstance(value,list):
+            if not isinstance(value, list):
                 raise TypeError('Cant set ListField to non-list type')
             list_values = []
             for list_item in value:
                 ref = None
-                if isinstance(list_item,BaseElasticModel):
+                if isinstance(list_item, BaseElasticModel):
                     ref = ReferenceObject(instance=list_item)
                 else:
-                    ref = ReferenceObject(instance_id = list_item)
+                    ref = ReferenceObject(instance_id=list_item)
                 list_values.append(ref)
             obj.__fields_values__[self.name] = list_values
-            
-    def on_save(self,obj):
+
+    def on_save(self, obj):
         if obj.__fields_values__[self.name] == []:
             obj.__fields_values__[self.name] = None
         if obj.__fields_values__[self.name] is not None:
@@ -208,19 +221,20 @@ class MultiReferenceField(BaseField):
                 if not ref.instance_id:
                     ref.instance.save()
                 id_list.append(ref.instance_id)
-            obj.__fields_values__[self.name] = id_list 
-        
+            obj.__fields_values__[self.name] = id_list
+
+
 class ReferenceField(BaseField):
 
     def __init__(self, *args, **kwargs):
-        super(ReferenceField,self).__init__(*args, **kwargs)
-        
-    def set_value(self,obj,value):
-        if isinstance(value,BaseElasticModel):
+        super(ReferenceField, self).__init__(*args, **kwargs)
+
+    def set_value(self, obj, value):
+        if isinstance(value, BaseElasticModel):
             if value.id is None:
                 next_int = len(obj.__reference_cache__.keys()) + 1
                 temp_id = 'TEMP_ID_%s' % (next_int)
-                obj.__reference_cache__[temp_id] = value 
+                obj.__reference_cache__[temp_id] = value
                 obj.__fields_values__[self.name] = temp_id
             else:
                 obj.__fields_values__[self.name] = value.id
@@ -230,26 +244,26 @@ class ReferenceField(BaseField):
 
     def get_value(self, obj):
         value_id = obj.__fields_values__[self.name]
-        if not obj.__reference_cache__.has_key(value_id):
+        if value_id is None or value_id == '':
+            return None
+        if value_id not in obj.__reference_cache__:
             from elasticosm.core.connection import ElasticOSMConnection
             referenced_object = ElasticOSMConnection.get_by_id(value_id)
             obj.__reference_cache__[value_id] = referenced_object
         return obj.__reference_cache__[value_id]
-    
-    def on_save(self,obj):
+
+    def on_save(self, obj):
         if obj.__fields_values__[self.name] is not None:
             try:
                 temp_id = obj.__fields_values__[self.name]
                 temp_id.index("TEMP_ID")
                 referenced_object = obj.__reference_cache__[temp_id]
                 referenced_object.save()
-                obj.__fields_values__[self.name]=referenced_object.id
+                obj.__fields_values__[self.name] = referenced_object.id
                 obj.__reference_cache__[referenced_object.id] = referenced_object
                 # remove the entry with the temp id
                 obj.__reference_cache__.pop(temp_id)
             except ValueError:
-                ## no extra work needed, either it's empty or it's an object that's already saved
-                pass 
-        
-        
-        
+                ## no extra work needed, either it's empty or
+                ## it's an object that's already saved
+                pass

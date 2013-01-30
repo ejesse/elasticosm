@@ -5,11 +5,12 @@ import re
 _slugify_strip_re = re.compile(r'[^\w\s-]')
 _slugify_hyphenate_re = re.compile(r'[-\s]+')
 
+
 def slugify(value):
     """
     Normalizes string, converts to lowercase, removes non-alpha characters,
     and converts spaces to hyphens.
-    
+
     From Django's "django/template/defaultfilters.py".
     """
     import unicodedata
@@ -18,6 +19,7 @@ def slugify(value):
     value = unicodedata.normalize('NFKD', value).encode('ascii', 'ignore')
     value = unicode(_slugify_strip_re.sub('', value).strip().lower())
     return _slugify_hyphenate_re.sub('-', value)
+
 
 def get_all_base_classes(cls):
 
@@ -31,6 +33,7 @@ def get_all_base_classes(cls):
                 work.append(parent)
     return bases
 
+
 def is_elastic_model(cls):
     all_bases = get_all_base_classes(cls)
     from elasticosm.models.base import BaseElasticModel
@@ -38,6 +41,7 @@ def is_elastic_model(cls):
         if b == BaseElasticModel:
             return True
     return False
+
 
 def get_timezone_aware_utc_time():
     d = datetime.datetime.utcnow()

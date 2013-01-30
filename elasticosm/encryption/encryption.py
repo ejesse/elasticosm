@@ -10,12 +10,14 @@ import hmac
 import os
 from Crypto.Cipher import AES
 
+
 class AuthenticationError(Exception):
     pass
 
+
 class Cryptographer(object):
     """Authenticated encryption class
-    
+
     Encryption algorithm: AES-CBC
     Signing algorithm: HMAC-SHA256
     """
@@ -26,7 +28,8 @@ class Cryptographer(object):
 
     def __init__(self, key_string=None, key_size=192):
         if key_string is None:
-            raise('To use the cryptographer you MUST pass in a key_string. Run Cryptogrpaher.generate_key_string()')
+            raise('To use the cryptographer you MUST pass in a key_string.' + \
+                  ' Run Cryptogrpaher.generate_key_string()')
         self.keys = self.extract_keys(key_string, key_size)
         self.key_size = key_size
 
